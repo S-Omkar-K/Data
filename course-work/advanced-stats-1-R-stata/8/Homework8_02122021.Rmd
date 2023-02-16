@@ -1,0 +1,218 @@
+---
+title: "HM_8_122262020"
+author: "Pavan Prathuru"
+date: "12/02/2021"
+output: pdf_document
+---
+
+### House-keeping operations
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# set working directory
+setwd("/Users/pavanprathuru/Documents/Pavan_Harris/MSCAPP/Modules/Module_1/AS-I/Homework/8_08Dec2021")
+
+# clear working memory
+rm(list=ls())    
+
+#load packages
+library(haven)
+library(tidyverse)
+library(boot)
+```
+\newpage
+
+### Question 1: Using the experimental data, test whether the those treated are more likely to work in the year after treatment 
+
+#### Load packages and data
+
+```{r}
+suppressMessages(library(dplyr)) # data manipulation
+data <- read_dta("/Users/pavanprathuru/Documents/Pavan_Harris/MSCAPP/Modules/Module_1/AS-I/Homework/8_08Dec2021/homework_8.dta")
+```
+
+#### Data cleaning and pre-processing
+
+```{r, message=FALSE}
+summary(data)
+```
+
+#### 1A. Use the t-test command; test whether the those treated are more likely to work in the year after treatment
+```{r}
+data_treated <- data %>% filter(data$treated == 1)
+data_untreated <- data %>% filter(data$treated == 0)
+
+data_treated_work <- c(data_treated$work)
+data_untreated_work <- c(data_untreated$work)
+```
+
+##### Two-sided t-test
+```{r}
+t.test(data_treated_work, data_untreated_work, alternative = "two.sided", var.equal = FALSE, conf.level = 0.95)
+```
+###### Inferences:
+1. Observed p-value = 0.01846 for the two-sided t-test with a 95% confidence level
+2. Observed p-value = 0.01846 is lower than 0.05
+3. Hence, we can thus reject the Null hypothesis
+4. We can not reject the Alternative Hypothesis that true difference in means of work is not equal to 0 between people who are treated and not treated
+5. Further, we can state with a confidence level of 95% that the difference in means of work lies between 0.01315123 and 0.14272914
+
+
+##### One-sided t-test
+```{r}
+t.test(data_treated_work, data_untreated_work, alternative = "greater", var.equal = FALSE, conf.level = 0.95)
+```
+###### Inferences:
+1. Observed p-value = 0.009229 for the one-sided t-test with a 95% confidence level
+2. Observed p-value = 0.009229 is lower than 0.05
+3. Hence, we can thus reject the Null hypothesis
+4. We can not reject the Alternative Hypothesis that true difference in means of work is greater than 0 between people who are treated and not treated Hence, it can be inferred that those treated are more likely to work in the year after treatment
+5. Further, we can state with a confidence level of 95% that the difference in means of work lies between 0.02359057 and Infinity
+
+
+#### 1B. Use the chi-square test; test whether the those treated are more likely to work in the year after treatment
+##### Data preparation: 
+```{r}
+data_work_by_treat <- data %>% 
+  group_by(treated, work) %>% 
+  count(treated, work) %>% 
+  group_by(treated) %>% 
+  mutate(treat_count = sum(n), perc_freq = round(n / sum(n), 3)*100) %>% 
+  filter(work == 1) 
+data_work_by_treat
+```
+##### chi-square test: 
+```{r}
+d <- matrix(c(230,67,296,129), nrow=2)
+chi_result <- chisq.test(d)
+chi_result
+chi_result$residuals
+```
+##### Inferences: 
+1. The p-value = 0.0256 for the chi-square test
+2. The p-value is less than 0.05
+3. Hence, the we can reject the Null Hypothesis that the probability of work is same with or without treatment
+4. We cannot reject the alternate hypothesis that probability of work is same with or without treatment is not equal
+
+#### 1C. Use Fisher’s exact test; test whether the those treated are more likely to work in the year after treatment
+##### Fisher’s exact test: 
+Null hypothesis: Hn: true odds ratio is equal to 1 (probability of work is same)
+Alternative hypothesis: Ha: true odds ratio is not equal to 1 (probability of work is not same)
+```{r}
+fisher.test(d, alternative = "two.sided", conf.level = 0.95)
+```
+##### Inferences: 
+1. The p-value = 0.02176 for the two-tail Fisher's Exact Test
+2. The p-value is less than 0.05
+3. Hence, the we can reject the Null Hypothesis that the probability of work is same with or without treatment (true odds ratio is equal to 1)
+4. We cannot reject the alternate hypothesis that probability of work between people who are treated and not treated (true odds ratio is not equal to 1)
+
+#### 1D. Why do the p-values on the two-sided test differ? Which should you believe?
+The p-values for the two-tail tests are as follows:
+  a. t-test: 0.01846
+  b. Chi-square test: 0.0256
+  c. Fisher's Exact Test: 0.02176
+Fisher’s exact test is preferable in this context because it is an exact test.
+Also, Fisher's test is more suitable for binary data in unpaired samples: the 2 x 2 table is used to compare treatment effects or the frequencies of side effects in two treatment groups.
+Chi-squared test is less precise as compared to Fisher's test. Since Fisher’s exact test may be computationally infeasible for large sample sizes and the accuracy of the Chi-square test increases with larger number of samples, the Chi-square test is a suitable replacement in such cases.
+The t-test is suitable for continuous data. Investigates whether the expected values for two groups are the same, assuming that the data are normally distributed. The test can be used for paired or unpaired groups. However, although often applied, t-test may be invalid when discrete and/or extremely skew data are analyzed, most notably the distribution being non-normal. In cases of extremely skewed data having an excess of zeroes, representing a numeric outcome that does not occur for a large percentage of cases (so is often zero), application of the t-test could lead to draw in- correct conclusions. A valid alternative is regression modeling to quantify the characteristics of the data.
+
+\newpage
+
+### Question 2: Using the regression command, test whether the those treated are more likely to work in the year after treatment
+
+#### 2A: Regress work against the treatment indicator and test the hypothesis
+```{r}
+y_treat <- lm(work ~ treated, data)
+summary(y_treat)
+```
+###### Inferences:
+1. Observed p-value = 0.02047 with a 95% confidence level
+2. Observed p-value = 0.02047 is lower than 0.05
+3. Hence, we can thus reject the Null hypothesis
+4. We can not reject the Alternative Hypothesis that true difference in means of work is not equal to 0 between people who are treated and not treated
+
+#### 2B: Regress work against the treatment indicator and all other covariates in the data set
+```{r}
+y_treat_multi <- lm(work ~ treated + age + educ + black + married + hisp, data)
+summary(y_treat_multi)
+```
+
+##### What happens to the R2 of the regression equation? 
+- The Adjusted R-squared reflects the fit of the model, where a higher value generally indicates a better fit.
+When we regress work against the treatment indicator and all other covariates in the data set, the value of Adjusted R-squared increased (0.02996) as compared to single-variable regression with 'treatment' alone (0.006059). This indicates a better fit of the regression model.
+
+##### What happens to the treatment indicator? Explain why you see these results.Compare them to the results in Problem 1.
+
+- Regarding the treatment indicator 'treated':
+                                    Estimate Std. Error t value Pr(>|t|) 
+In single variate regression model: 0.07794    0.03356   2.323   0.0205
+In Multi-variate regression model:  0.077544   0.033221   2.334  0.01986
+
+- The treatment indicator decreases slightly in value. This can be attributed to introduction of the rest of the variates in the regression model. However, given the slight variation in treatment indicator as compared to single-variate model, it can be still intrepreted that 'treatment' indicator has a major influence on 'work'. People benefitted by being part of the treatment group where they received job search assistance
+- The Standard Error decreases slightly due to introduction of the rest of the variates in the regression model
+- The Residual standard error also decreases slightly due to introduction of the rest of the variates in the regression model
+
+The p-values for the two-tail tests are as follows:
+  a. t-test: 0.01846
+  b. Chi-square test: 0.0256
+  c. Fisher's Exact Test: 0.02176
+The p-value for the single-variate regression model: 0.02047
+The p-value for the multi-variate regression model: 0.0001024
+
+From the p-values, the linear regression seems to be a better alternative for modeling to quantify the characteristics of the data.
+
+\newpage
+
+### Question 3: Given the data from the experiment, do the following:
+
+#### 3A Derive the marginal pmf of work when treated
+```{r}
+f_treat <- data %>%  filter(treated == 1) %>% count(work)
+f_treat %>%  mutate (prob = n/sum(n))
+```
+
+#### 3B Derive the marginal pmf of work when not treated
+```{r}
+f_control <- data %>%  filter(treated == 0) %>% count(work)
+f_control %>%  mutate (prob = n/sum(n))
+```
+
+#### 3C Derive the Frechet-Hoeffding bounds for the joint distribution.
+Based on the above marginal PMFs,
+1. Frechet-Hoeffding bounds for the joint distribution for fraction of people who gained from the treatment: [0.07, 0.30] 
+2. Frechet-Hoeffding bounds for the joint distribution for fraction of people who lose from the treatment: [0.00, 0.23] 
+
+\newpage
+
+### Question 4A: Test the hypothesis that the vaccines are equally effective against the alternative that they are not.
+              Not affected       Affected
+Moderna       14329              269
+Pfizer        21569              100
+
+#### Fisher's Test
+Null hypothesis: Hn: true odds ratio is equal to 1 (vaccines are equally effective)
+Alternative hypothesis: Ha: true odds ratio is not equal to 1 (vaccines are not equally effective)
+```{r}
+d <- matrix(c(14329, 269, 21569, 100), nrow=2)
+fisher.test(d, alternative = "two.sided", conf.level = 0.95)
+```
+##### Inferences: 
+1. The p-value < 2.2e-16 for the two-tail Fisher's Exact Test
+2. The p-value is much lesser than 0.05
+3. Hence, the we can reject the Null Hypothesis that the vaccines are equally effective (true odds ratio is equal to 1)
+4. We cannot reject the alternate hypothesis that the vaccines are not equally effective (true odds ratio is not equal to 1)
+
+### Question 4B: Explain why this is not a legitimate experimental trial
+This is not a legitimate experimental trail as each vaccine trial (whether Moderna or Pfizer) suffers from a fundamental evaluation problem that arises from the impossibility of observing what would happen to a given person in both the
+state where he or she receives a vaccine and the state where he or she does not. The difficulty with estimating the mean impact of the vaccination program, either for an entire population or for the population of participants in a voluntary program, arises in constructing the desired counterfactual.
+
+If a person could be observed in both states, the impact of the vaccine on that person could be calculated by comparing
+his or her outcomes in the two states, and the evaluation problem would be solved. More formally, suppose that a person can be in either a vaccinated state, denoted state "1," or an unvaccinated state, denoted state "0," and that there are outcomes, denoted Y1 and Y0, associated with each state. These outcomes might consist infection rates in the two states. The gain (or loss) from
+vaccine, call it , equals the difference in outcomes between the two states, or Y1 – Y0.
+
+Because we cannot determine the impact of vaccine on particular individuals, and thus cannot construct the missing counter factual, these trials cannot be considered legitmate experiments.
+The above comparision of effectiveness of the two vaccines based on the treatment group alone is also not legitimate.
+

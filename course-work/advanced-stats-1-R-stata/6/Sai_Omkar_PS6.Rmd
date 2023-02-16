@@ -1,0 +1,312 @@
+---
+title: "Problem Set 6"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+rm(list=ls())    
+```
+
+#Question 1 A new three-sided die takes on values of 1, 2, and 3. It is supposed to be fair, but you expect Pr(x = 1) != 1/3. You have data from 5 rolls of the die. Use an exact test
+
+#1A Describe the results that would allow you to accept and reject the null hypothesis of a fair die with a two-sided test at the 95% confidence level
+
+```{r}
+
+#Null Hypotheses Pr(X ==1) == 1/3
+#Expected or Alternate Hypotheses Pr(X==1) != 1/3
+
+#Number of rolls = 5
+#Given Confidence level = 95% (0.95)
+
+rolls <- 5
+confidence_level = 0.95
+
+for (k in 0:rolls){
+  sample = binom.test(k, n = rolls, p = 1/3 ,alternative = "two.sided", conf.level = confidence_level)
+  if (sample$p.value >= (1 - confidence_level)){
+    print(paste("Null Hypotheses not rejected, successes=successes=", k))
+    print(paste("p.value = ",sample$p.value))
+    print(paste("Confidence interval=[", sample$conf.int[1], ", ", sample$conf.int[2], "]" ) )
+
+  }else{
+    print(paste("Null Hypotheses rejected, successes = ", k))
+    print(paste("p.value = ",sample$p.value))
+    print(paste("Confidence interval=[", sample$conf.int[1], ", ", sample$conf.int[2], "]" ) )
+  }
+}
+
+
+```
+
+
+
+
+
+
+
+```{r}
+
+
+#1B:  A new three-sided die takes on values of 1, 2, and 3. It is supposed to be fair, but you expect Pr(x = 1) != 1/3. You have data from 5 rolls of the die. Describe the results that would allow to you accept and reject the null hypothesis with a one-sided test at the 95% confidence level with the alternate hypothesis being that the probability of getting heads is less than 1/3
+
+
+#Null hypotheses Pr(x = 1) == 1/3
+#Expected or Alternative Hypotheses Pr(x = 1) < 1/3
+
+
+
+#One-sided less test
+rolls <- 5
+confidence_level = 0.95
+
+
+for (k in 0:rolls){
+  sample = binom.test(k, n = rolls, p = 1/3 ,alternative = "less", conf.level = confidence_level)
+  if (sample$p.value >= (1 - confidence_level)){
+    print(paste("Null Hypotheses not rejected, successes=", k))
+    print(paste( "p.value=",sample$p.value))
+    print(paste("Confidence interval=[", sample$conf.int[1], ", ", sample$conf.int[2], "]" ) )
+    
+  }else{
+    print(paste("Null Hypotheses rejected, successes=", k))
+    print(paste("p.value=",sample$p.value))
+    print(paste("Confidence interval=[", sample$conf.int[1], ", ", sample$conf.int[2], "]" ) )
+    
+  }
+}
+
+```
+
+
+
+
+
+
+```{r}
+
+#2A:  Repeat the exercise in Question 1A assuming you have 25 observations.
+
+
+rolls = 25
+confidence_level = 0.95
+
+for (k in 0:rolls){
+ sample = binom.test(k, n = rolls, p = 1/3 ,alternative = "two.sided", conf.level = confidence_level)
+  if (sample$p.value >= (1 - confidence_level)){
+    print(paste("Null Hypotheses not rejected, successes=", k))
+    print(paste( "pvalue = ",sample$p.value))
+    print(paste("Confidence interval=[", sample$conf.int[1], ", ", sample$conf.int[2], "]" ) )
+  }else{
+    print(paste("Null Hypotheses rejected, successes=", k))
+    print(paste( "p.value = ",sample$p.value))
+    print(paste("Confidence interval=[", sample$conf.int[1], ", ", sample$conf.int[2], "]" ) )
+  }
+}
+
+
+
+
+```
+
+
+
+
+#2B:  Repeat the exercise in Question 1B assuming you have 25 observations. 
+
+```{r}
+
+rolls <- 25
+confidence_level = 0.95
+
+for (k in 0:rolls){
+  sample = binom.test(k, n = rolls, p = 1/3 ,alternative = "less", conf.level = confidence_level)
+  if (sample$p.value >= (1 - confidence_level)){
+    print(paste("Null Hypotheses not rejected, successes=", k))
+    print(paste( "p.value = ",sample$p.value))
+    print(paste("Confidence intervel=[", sample$conf.int[1], ", ", sample$conf.int[2], "]" ) )
+  }else{
+    print(paste("Null Hypotheses rejected, successes=", k))
+    print(paste( "p.value = ",sample$p.value))
+    print(paste("Confidence interval=[", sample$conf.int[1], ", ", sample$conf.int[2], "]" ) )
+  }
+}
+
+```
+
+
+```{r}
+
+#3. (25 points) Using data from Homework 4, test the hypothesis that African American women and white women ages 25-55 (inclusive) have the same probability of being employed. Use a two-sided Fisher’s exact test and a chi-square test with a 95% confidence level. Use both Stata and R.
+
+
+library(ggplot2)
+library(moments)
+library(dplyr)
+
+data <- read.csv("E:/Autumn'21/Advanced_Stats/ProblemSets/4/ppha312x2021.csv")
+
+data <- data %>% filter(inctot >= 0)
+
+```
+
+```{r}
+#New column: Hispanic
+
+data %>% count(hispan)
+data$isHispanic <- ifelse(data$hispan == 'Not Hispanic', 0, 1)
+data <- data %>% mutate(isHispanic = as.factor(isHispanic))
+summary(data$isHispanic)
+summary(data$hispan)
+summary(data)
+```
+
+```{r}
+#New column: African American
+data$isAfricanAmerican <- ifelse(data$race == 'Black/African American/Negro', 1, 0)
+data <- data %>% mutate(isAfricanAmerican = as.factor(isAfricanAmerican))
+summary(data$isAfricanAmerican)
+summary(data)
+```
+
+```{r}
+#Filtering only white, non-Hispanic or African American, non-Hispanic ;
+
+data <- data %>% filter((race == 'White' & isHispanic == 0) | 
+                          (isAfricanAmerican == 1 & isHispanic == 0))
+summary(data)
+```
+
+```{r}
+
+#Filtering to  women and age [25:55]
+
+data$isFemale <- ifelse(data$sex == 'Female', 1, 0)
+data <- data %>% mutate(isFemale = as.factor(isFemale))
+data <- data %>% mutate(age = as.numeric(age))
+data <- data %>% filter(isFemale == 1) %>% filter(age >= 25 & age <= 55)
+```
+
+
+```{r}
+data_employed_by_race <- 
+  data %>% 
+  group_by(race, empstat) %>% count(race, empstat) %>% group_by(race) %>% 
+  mutate(race_count = sum(n), perc_freq = round(n / sum(n), 3)*100) %>% filter(empstat == 'Employed')
+data_employed_by_race
+
+```
+
+
+
+
+#Fisher's test: 
+
+
+```{r}
+#Two-tail test
+#Null Hypotheses:Probability of being employed is same for both White woman and African-American women with age ranges [25-55]
+#Alternative Hypotheses:Probability of being employed is not same for both White woman and African-American women with age ranges [25-55]
+test_mat <- matrix(c(791,264,599,202), nrow=2)
+fisher.test(test_mat, alternative = "two.sided", conf.level = 0.95)
+
+```
+#Observations: 
+#African-American Women and White women with age range [25-55] have the same probability of getting employed. This is because, the p-value = 0.9569 we got from the two-tail test is greater than the standard 0.05 for the 95% confidence level and thus the null hypotheses is not rejected. 
+
+
+
+
+```{r}
+#One tail test
+#Null Hypotheses:Probability of being employed is same for both White woman and African-American women with age ranges [25-55]
+#Alternative Hypotheses:Probability of being employed is not same for White woman over African-American women with age ranges [25-55]
+fisher.test(test_mat, alternative='greater', conf.level = 0.95)
+
+```
+
+#Observations
+#African-American Women and White women with age range [25-55] have the same probability of getting employed. This is because, the p-value = 0.4828 we got from the test is greater than the standard 0.05 for the 95% confidence level and thus the null hypotheses is not rejected.
+
+
+```{r}
+# chi-square test:
+#Null Hypotheses:Probability of being employed is same for both White woman and African-American women with age ranges [25-55]
+#Alternative Hypotheses:Probability of being employed is not same for White woman over African-American women with age ranges [25-55]
+
+chisq.test(test_mat)
+```
+
+#Observations
+#African-American Women and White women with age range [25-55] have the same probability of getting employed. This is because, the p-value = 0.9667 we got from the test is greater than the standard 0.05 for the 95% confidence level and thus the null hypotheses is not rejected.
+
+
+
+
+
+
+#####4444444444444444444444444444444444444444444444444######
+
+
+
+### 4: Using data from Homework 4, test the hypothesis that African American women and white women ages 25-55 (inclusive) have the same total income. Use a two-sided t-test with a 95% confidence level. How confident of this test are you? Why?
+
+```{r}
+data <- data %>% 
+  mutate(isEmployed = ifelse(data$empstat == 'Employed', 1, 0)) 
+data <- data %>% 
+  mutate(isEmployed = as.factor(isEmployed))
+data_income_AA_White <- data %>% 
+  filter(data$isEmployed == 1) %>% 
+  group_by(race) %>% 
+  summarize(count_employed = n(),
+            total_income = sum(inctot, na.rm = TRUE),
+            mean_income = mean(inctot, na.rm = TRUE))
+
+
+data_income_AA_White
+```
+
+
+
+#Two-sided t-test with a 95% confidence level
+#Null hypotheses:True difference in Mean is 0 for African American women and White women with age range [25-55]
+#Alternative hypotheses: True difference in Mean is not 0 for African American women and white women with age range [25-55]
+
+```{r}
+data_AA_employed <- data %>% 
+  filter(data$isEmployed == 1 & data$isAfricanAmerican == 1 )
+
+data_totalIncome_AA_employed <- c(data_AA_employed$inctot)
+
+data_White_employed <- data %>% 
+  filter(data$isEmployed == 1 & data$isAfricanAmerican == 0 )
+data_totalIncome_White_employed <- c(data_White_employed$inctot)
+
+t.test(data_totalIncome_AA_employed, data_totalIncome_White_employed, alternative = "two.sided",
+       var.equal = FALSE, conf.level = 0.95)
+```
+#Observations
+#Observed p-value = 1.728e-11 for the two-sided t-test with a 95% confidence, is less than the standard 0.05 and thus we can reject the null hypothes. Thus, we cannot reject the alternative hypotheses that the true difference in means for White Women and African-American Womnan with age range [25:55] is not 0.
+
+```{r}
+t.test(data_totalIncome_AA_employed, data_totalIncome_White_employed, alternative = "less", 
+       var.equal = FALSE, conf.level = 0.95)
+```
+#The one sided p value is 8.64e-12 which is less than 0.05. Thus, we can reject the null hypotheses and not reject thealternate hypotheses.
+
+
+```{r}
+t.test(data_totalIncome_AA_employed, data_totalIncome_White_employed, alternative = "greater", 
+       var.equal = FALSE, conf.level = 0.95)
+```
+
+
+#Looking at the p values in the above tests, we cannot reject the hypothesis that the the total income of the African American women ages 25-55 (inclusive) is less that the white women age range [25:55]

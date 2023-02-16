@@ -1,0 +1,67 @@
+---
+title: "Assignment8"
+author: "Aditya Burra"
+date: "11/26/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list=ls())
+set.seed(163264)
+library(tidyverse)
+library(boot)
+library(haven)
+library(copula)
+original_data <- read_dta("~/Desktop/Harris class materials/Quarter 1/Stats/StatsAssignment8/homework_8.dta")
+```
+
+```{r Question 1}
+t.test(work~treated, alternative="two.sided", data=original_data)
+chisq.test(table(original_data$work, original_data$treated))
+fisher.test(table(original_data$work, original_data$treated))
+## 1 D) I would belive the Fisher's exact test over the chi-squared and the t-test, because it is an exact test while the chi-square and t-test are asymptotic in nature. The Fisher's test enables us to obtain an accurate significance level without relying on assumptions that might not be met by the data. They differ because asymptotic tests make assumptions about the data.
+
+```
+```{r Question 2}
+regressed <- lm(work~treated, data=original_data)
+summary(regressed)
+regressed2 <- lm(work~treated + hisp + age + educ + black + married, data=original_data)
+summary(regressed2)
+## 2) When we regress work against the treatment variable and all the other covariates in the data set, the R-squared of the regression equation increases significantly from 0.0074 to 0.0380. R-squared is still not very high, so the variance of work is not well-described by the inputs of the model. THe 95% confidence interval of the treatment variable is nearly the same, but has a slightly higher lower bound, and a slightly lower upped bound, which makes it "tighter". P>|t| is still 0.020 in both regression equations. This value is close/equal to the value obtained from the chi-squared test and the t-test. They are underestimates, because the Fisher's exact test gives us a value of 0.022.
+```
+```{r Question 3}
+treated_data <- original_data %>%  filter(treated == 1) %>% count(work)
+treated_data <- treated_data %>%  mutate (prob = n/sum(n))
+control_data <- original_data %>%  filter(treated == 0) %>% count(work)
+control_data <- control_data %>%  mutate (prob = n/sum(n))
+## Rest done in notes
+```
+
+```{r Question 4}
+# The null Hypothesis is that Pfizer's Efficacy - Moderna's Efficacy = 0, that is, that they are equally effectively
+# Alternative Hypothesis is that Pfizer's Efficacy - Moderna's Efficacy != 0, that they are not equally effective
+
+# For Moderna, n = 14598, and 269 get covid
+# For Pfizer, n = 21669, and 100 get covid
+
+pfizer_n = 21669
+moderna_n = 14598
+
+pfizer_covid = 269
+moderna_covid = 100
+
+percent_covid_moderna = moderna_covid/moderna_n
+percent_covid_pfizer = pfizer_covid/pfizer_n
+
+data <- data.frame(
+  "covid" = c(moderna_covid, pfizer_covid),
+  "no covid" = c(moderna_n - moderna_covid, pfizer_n - pfizer_covid),
+  row.names = c("Moderna", "Pfizer")
+)
+
+fisher.test(data)
+# We reject the Null hypothesis, that the efficacy of both vaccines is the same. We have a very low p-value, and can therefore reject the null in favor of the alternate hypothesis.
+## This is not a legitimate experiment, because we do not have a treatment and control group. We only have treated observations, not the controlled observations. Without that data, we cannot treat this experiment as being legitimate. If we are able to find the entire data (treatment and control), we would be able to get meaningful/right results from the experiment.
+```
+

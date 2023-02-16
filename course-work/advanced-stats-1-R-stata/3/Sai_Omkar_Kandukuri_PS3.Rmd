@@ -1,0 +1,72 @@
+---
+title: "Sai_Omkar_Kandukuri_PS3"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+```{r}
+
+library(tidyverse)
+set.seed(11182021)
+grid <- expand.grid(x=c(1,2,3),y=c(1,2,3,4))
+sample <- mutate(grid,p = c(0.15,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.1,0.05,0.25,0.1))
+
+#sample_50n <- sample_n(sample,size = 50, replace = TRUE, weight = sample$p)
+sample50n <- sample_n(sample,size = 50, replace = TRUE, weight = sample$p)
+
+
+sample50n %>% summarise(mean(x), var(x), mean(y), var(y), cov(x,y))
+
+
+```
+
+
+
+
+```{r 500}
+
+
+grid <- expand.grid(x=c(1,2,3),y=c(1,2,3,4))
+sample <- mutate(grid,p = c(0.15,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.1,0.05,0.25,0.1))
+
+sample500n <- sample_n(sample,size = 500, replace = TRUE, weight = sample$p)
+
+
+sample500n %>% summarise(mean(x), var(x), mean(y), var(y), cov(x,y))
+
+```
+
+
+
+
+
+```{r 10000}
+
+
+grid <- expand.grid(x=c(1,2,3),y=c(1,2,3,4))
+sample <- mutate(grid,p = c(0.15,0.05,0.05,0.05,0.05,0.05,0.05,0.05,0.1,0.05,0.25,0.1))
+
+sample10000n <- sample_n(sample,size = 10000, replace = TRUE, weight = sample$p)
+
+
+sample10000n %>% summarise(mean(x), var(x), mean(y), var(y), cov(x,y))
+
+#Mean, Variance, covariance gets fine tuned and closer to calculated values as we increase the sample size
+
+```
+
+
+
+

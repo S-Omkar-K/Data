@@ -1,0 +1,121 @@
+---
+title: "Sai_Omkar_PS7"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load packages and data
+
+```{r}
+suppressMessages(library(dplyr)) 
+library(ggplot2) 
+library(moments) 
+library(haven)
+library(tidyverse)
+library(boot)
+
+data <- read.csv("ppha312x2021.csv") #working directory is same as data directory
+# set seed to ensure same results
+set.seed(110821) 
+
+```
+
+```{r}
+data <- data %>% filter(inctot >= 0)
+```
+
+
+```{r}
+
+summary(data$age)
+
+#desc(data$age)
+
+#max(data$age)
+
+summary(data)
+
+```
+
+```{r}
+
+#New Column : African American
+data %>% count(race)
+data$isAfricanAmerican <- ifelse(data$race == 'Black/African American/Negro', 1, 0)
+data <- data %>% mutate(isAfricanAmerican = as.factor(isAfricanAmerican))
+summary(data$isAfricanAmerican)
+head(data$isAfricanAmerican)
+
+```
+
+```{r}
+data$isFemale <- ifelse(data$sex == 'Female', 1, 0)
+data <- data %>% mutate(isFemale = as.factor(isFemale))
+summary(data$isFemale)
+summary(data)
+```
+
+```{r}
+data <- data %>% mutate(isEmployed = ifelse(data$empstat == 'Employed', 1, 0))
+data <- data %>% mutate(isEmployed = as.factor(isEmployed))
+summary(data$isEmployed)
+summary(data)
+```
+
+```{r}
+data <- data %>% mutate(age = as.numeric(age)) #formatting age to be numeric using as.numeric
+question1_data <- data %>% filter(data$isFemale == '1' & data$isAfricanAmerican == '1' & data$isEmployed == '1') %>% select(incwage,age)
+                        
+                        
+summary(question1_data)
+```
+
+
+
+
+```{r}
+corr <- function(x, indices){
+  data <- x[indices, ] 
+  corr <- cor(data[,1], data[,2])
+  return( corr )
+}
+
+coefficient <- boot(question1_data[],
+                   corr, 
+                   10000)
+
+
+coefficient
+```
+
+#The standard error of the correlation coefficient between labor wages, worker ages is ~ 0.0272992
+
+
+
+
+
+
+
+
+
+####Question 2 
+
+#Filter white, men,  employed
+
+```{r}
+
+question2_data <- data %>% filter(data$race == "White" & data$isEmployed == '1' & data$isFemale == '0') %>% select(incwage,age)
+
+coefficient <- boot(question2_data[],
+                   corr, 
+                   10000)
+
+
+coefficient
+
+
+```
+#The standard error of the correlation coefficient between labor wages, worker ages is ~ 0.02086219

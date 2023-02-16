@@ -1,0 +1,120 @@
+---
+title: "TA_Session_7"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+
+
+
+#Use sample S = {x1,x2,....xn} representing the population distribution
+#Generate n observations for bootstrap
+#Run b times of bootstrap
+
+#Result is b datasets of bootstrap, and each dataset with n observations
+
+
+
+install.packages("boot")
+
+library(haven)
+library(tidyverse)
+library(boot)
+
+#clear working memory
+
+rm(list=ls())
+
+#read in data
+
+onesample <- read_dta("oneSample.dta")
+twosample <- read_dta("twoSample.dta")
+
+summary(onesample)
+summary(twosample)
+
+
+#set seed
+
+set.seed(110821)
+
+
+
+```
+
+
+```{r}
+
+# 1) one sample bootstrap : se for 25th percentile
+
+#Bootstrap function boot() requires tou to define the unction that takes data and indices (boot deals with indices automatically)
+
+
+perc <- function(x, indices){
+  data <- x[indices]  #x[1] means we want the first bootstrap data of all bootstraps 
+  percw <- quantile(data,probs = 0.25) #this is the 25th percentile 
+  return(percw)
+}
+
+percentile_25 <- boot(onesample$x, #required
+                      perc, #required
+                      10000 #required
+                      )
+                      
+percentile_25
+
+
+
+
+```
+
+
+```{r}
+
+#t-test result for the existint data "onesample"
+
+
+my.t <- function(x,mu, indices) {
+  t_test <- t.test(x[indices], mu=mu)
+  t_statistic <- t_test$statistic
+  
+  return(t_statistic)
+}
+
+
+onesample.boot  <- boot(onesample$x, # required
+                        my.t, #required
+                        10000, # required
+                        mu = 35) # specify mu
+
+
+onesample.boot
+
+z_score <- onesapmple.boot$t0/sd(onesample.boot$t)
+names(z_score) <- 'z'
+z_score
+
+#twotail p value associated with z_score
+p_value <- Z*
+
+```
+
+# two sample bootstrap : se for correlation coefficient
+
+```{r}
+corr <- function(x,indices){
+  data <- x[indices,]
+  corr <- cor(data[,1],data[,2])
+  return (corr)
+}
+
+
+
+
+coefficient < boot(twosample, corr, 10000)
+```

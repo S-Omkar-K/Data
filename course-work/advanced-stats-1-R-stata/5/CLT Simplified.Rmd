@@ -1,0 +1,33 @@
+set.seed(11221111)
+
+#Steps to code:
+#1. Generate 10000 sample means and standard deviations
+#2. Determine z-scores of 10000 sample means
+#3. Determine percent outliers based on z-score
+#Based on the Central Limit Theorem, the distribution of the z-score should converge to a normal standard N(0, 1) so
+#as the sample size increases, we would expect to get 5% outliers
+
+#Example: Binary with P(x=1) = 0.46
+
+#Determines whether outlier or not
+Critical_test_1 <- function(N){
+  x1 <- ifelse(runif(N) < 0.46, 1, 0)
+  sample_mean <- mean(x1) #generate mean
+  sample_sd <- sd(x1) #generate SD
+  z_score <- (sample_mean - 0.46)/(sample_sd / sqrt(N)) #calculate Z-score
+  outlier_flag <- ifelse(z_score > 1.96 | z_score < -1.96, 1, 0) #determine if outlier
+  return(outlier_flag)
+}
+
+#Replicate outlier test for all 10000 sample means and calculate percentage outliers
+Monte_Carlo_1 <- function(N){
+  critical_test_1 <- replicate(10000, Critical_test_1(N)) #repeat outlier test 10000 times
+  percentage_outliers_1 <- mean(critical_test_1) #calculate percentage outliers
+  print(paste("Percentage of sample means which are outliers for distribution 1: ", percentage_outliers_1))
+}
+
+#repeat for differing sample sizes
+for (N in c(36, 64, 100, 225, 2500)){
+  print(paste('Sample size for each sample mean: ', N))
+  Monte_Carlo_1(N)
+}

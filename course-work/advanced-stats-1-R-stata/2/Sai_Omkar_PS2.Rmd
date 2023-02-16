@@ -1,0 +1,72 @@
+---
+title: "Kandukuri Sai Omkar AdvStats PS2"
+output:
+  pdf_document: default
+  html_document: default
+---
+Program generates random number from fair five sided die. 
+
+```{r data}
+#library(tidyverse)
+#Question 7A
+set.seed(10072021)
+die <- c(sample(1:5, 100, replace = TRUE, prob = c(1/15, 2/15, 3/15, 4/15, 5/15))) #Generate random integer from 1 to 3 with probabilities, 100 times
+
+mean_dice_value <- mean.default(die, trim = 0, na.rm = FALSE) #Calculate mean of random numbers
+print('Mean = ') 
+print(mean_dice_value) #Print mean value
+
+sd_dice_value <- sd(die) #Determine standard deviation of random numbers
+print('Standard Deviation = ')
+print(sd_dice_value)
+
+var_dice_value = var(die)
+print('Variance = ')
+print(var_dice_value)
+```
+
+
+```{r 7A}
+
+sample = c(1,2,3,4,5)
+
+n = length(sample)
+
+prob = c(1/15, 2/15, 3/15, 4/15, 5/15)
+
+mean_distribution = sum(sample*prob)
+
+print('mean_distribution = ')
+print(mean_distribution)
+
+var_distribution = sum(((sample- mean_distribution)^2)*prob)
+
+print('var_distribution = ')
+print(var_distribution)
+
+
+
+```
+
+
+
+
+
+
+```{r 7B}
+#Question 7B
+mean_error = mean_distribution - mean_dice_value
+print('Error or difference in mean of distribution and mean of sample drawn   = ')
+print(mean_error)
+
+var_error = var_distribution - var_dice_value
+print('Error or difference in variance of distribution and variance of sample drawn   = ')
+print(var_error)
+
+#Response to question 7B
+#In the sample drawn in R and Stata, we have set the seed to 10072021 and we have made 100 observations 
+#that are randomly generated using the random integer generator. 
+#Hence the observed mean/variance is different from the calculate mean/variance. 
+#The observed mean/variance will again change if the number of observations are changed. 
+
+```

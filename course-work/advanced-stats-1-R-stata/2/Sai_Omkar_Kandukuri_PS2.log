@@ -1,0 +1,70 @@
+------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  C:\Users\saiomkark\OneDrive - The University of Chicago\AdvStats\
+> ProblemSet.log
+  log type:  text
+ opened on:  15 Oct 2021, 15:48:29
+
+. 
+. set seed 10072021
+
+. set obs 100
+number of observations (_N) was 0, now 100
+
+. 
+. *In this example, we have a 3-sided die where:
+. *The probability of rolling a 1 is 0.25
+. *The probability of rolling a 2 is 0.3
+. *The probability of rolling a 3 is 0.45
+. 
+. *Generate random number p1 between 0 and 1
+. generate p1 = runiform()
+
+. 
+. 
+. *Generate x1 value from random number p1
+. generate x1 = 1 if p1 <= 1/15
+(93 missing values generated)
+
+. replace x1 = 2 if p1 <= 3/15 & p1 > 1/15
+(18 real changes made)
+
+. replace x1 = 3 if p1 <= 6/15 & p1 > 3/15
+(20 real changes made)
+
+. replace x1 = 4 if p1 <= 10/15 & p1 > 6/15
+(19 real changes made)
+
+. replace x1 = 5 if p1 <= 1 & p1 > 10/15
+(36 real changes made)
+
+. 
+. *Calculate mean and standard deviation , varuiance from simulation
+. sum x1, detail
+
+                             x1
+-------------------------------------------------------------
+      Percentiles      Smallest
+ 1%            1              1
+ 5%            1              1
+10%            2              1       Obs                 100
+25%          2.5              1       Sum of Wgt.         100
+
+50%            4                      Mean               3.59
+                        Largest       Std. Dev.       1.32646
+75%            5              5
+90%            5              5       Variance       1.759495
+95%            5              5       Skewness      -.4169426
+99%            5              5       Kurtosis       1.895994
+
+. 
+. 
+. 
+. 
+. log close
+      name:  <unnamed>
+       log:  C:\Users\saiomkark\OneDrive - The University of Chicago\AdvStats\
+> ProblemSet.log
+  log type:  text
+ closed on:  15 Oct 2021, 15:48:29
+------------------------------------------------------------------------------

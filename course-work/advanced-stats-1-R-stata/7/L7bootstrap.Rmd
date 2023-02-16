@@ -1,0 +1,95 @@
+---
+title: "L7bootstrap"
+author: "Jieyi"
+date: "11/8/2021"
+output: pdf_document
+---
+# Basic Setup {-}
+```{r}
+setwd("")
+# install.packages("boot")
+library(haven)
+library(tidyverse)
+library(boot)
+
+# clear working memory
+rm(list=ls())
+
+# read in data
+onesample <- read_dta("oneSample.dta")
+twosample <- read_dta("twoSample.dta")
+summary(onesample)
+summary(twosample)
+
+# set seed to ensure same results
+set.seed(110821) 
+```
+
+*Bootstrap function boot() requires you to define the function that takes data and indices (boot deals with indices automatically).*  
+
+# 1) One Sample bootstrap: se for 25th percentile
+```{r}
+# set the function for boot()
+perc <- function(y, indices) {
+  data <-  y[indices] 
+  percw <- quantile(data, probs = 0.25)
+  return( percw )
+}
+
+percentile_25 <- boot(onesample$x, # required
+                      perc, # required
+                      10000) # required
+percentile_25
+```
+
+# 2) One Sample bootstrap: t-statistics 
+
+```{r}
+# t-test result for the existing data "onesample"
+t_output <- t.test(onesample$x, mu = 35)
+t_output
+
+# set the function for boot()
+my.t <- function(x, mu, indices) {
+  t_test <- t.test(x[indices], mu=mu)
+  t_statistic <- t_test$statistic
+  return( t_statistic )
+}
+
+onesample.boot <-  boot(onesample$x, # required
+                      my.t, # required
+                      10000, # required
+                      mu = 35) # specify the mu of my.t function
+onesample.boot
+
+# z-score for the test Ho: the t-statistic is 0
+
+# t0 is the observed value
+# t is the 10000 bootstrap results
+z_score <- onesample.boot$t0/sd(onesample.boot$t)
+names(z_score) <- 'z'
+z_score
+
+# two-tail p-value associated with the z_score
+p_value<-2*(1 - pnorm(z_score))
+p_value
+
+# 95% confidence interval 
+quantile(onesample.boot$t, c(.025, .975))
+boot.ci(onesample.boot, type=("perc"))
+```
+
+# 3) Two Sample bootstrap: se for correlation coefficient
+
+```{r}
+corr <- function(x, indices){
+  data <- x[indices, ] 
+  corr <- cor(data[,1], data[,2])
+  return( corr )
+}
+
+coefficient <- boot(twosample, 
+                   corr, 
+                   10000)
+coefficient
+```

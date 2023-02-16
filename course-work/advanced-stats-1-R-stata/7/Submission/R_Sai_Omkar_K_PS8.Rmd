@@ -1,0 +1,158 @@
+---
+title: "R_Sai_Omkar_K_PS8"
+author: "Sai Omkar Kandukuri"
+date: "08/12/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+
+rm(list=ls())    
+
+library(haven)
+library(tidyverse)
+library(boot)
+library(copula)
+```
+```{r data}
+
+data <- read_dta("E:/Autumn'21/Advanced_Stats/ProblemSets/8/homework_8.dta")
+```
+#### 1A. Use the t-test command; 
+```{r}
+data_treated <- data %>% filter(data$treated == 1)
+data_untreated <- data %>% filter(data$treated == 0)
+
+data_treated_work <- c(data_treated$work)
+data_untreated_work <- c(data_untreated$work)
+```
+
+
+
+```{r Question 1A}
+suppressMessages(library(dplyr))
+
+
+#TTest two sided
+
+t.test(data_treated_work, data_untreated_work, alternative = "two.sided", var.equal = FALSE, conf.level = 0.95)
+#Method 2
+t.test(work~treated, alternative="two.sided", data=data)
+#TTest one sided
+t.test(data_treated_work, data_untreated_work, alternative = "greater", var.equal = FALSE, conf.level = 0.95)
+
+#Observed p-value for the t-test with a 95% confidence interval is 0.01846. This value is less than 0.05. So, the Null hypothesis can be rejected and Alternative Hypothesis(that the true difference in means of work in the year between treated and not treated people is not equal to 0) cannot be rejected. 
+
+```
+
+
+```{r Question 1B}
+
+#ChiSquare Test Question 1B
+data_work_treat_type <- data %>% 
+  group_by(treated, work) %>% 
+  count(treated, work) %>% 
+  group_by(treated) %>% 
+  mutate(treat_count = sum(n), perc_freq = round(n / sum(n), 3)*100) %>% 
+  filter(work == 1) 
+data_work_treat_type
+
+chisq_data <- matrix(c(230,67,296,129), nrow=2)
+chisq_test <- chisq.test(chisq_data)
+chisq_test
+chisq_test$residuals
+
+#Method 2 
+chisq.test(table(data$work, data$treated))
+
+
+#Observed p-value here is 0.0256 for this test. As the observed p-value is less than 0.05, we can reject the Null Hypothesis. And we cannot reject the alternate hypothesis that probability of working in the year is same for treated and not treated is not equal.
+
+```
+
+
+```{r Question 1C}
+#Fischer Test
+fisher.test(chisq_data, alternative = "two.sided", conf.level = 0.95)
+
+#Method 2
+fisher.test(table(data$work, data$treated))
+
+#Observed p-value is 0.02176 for the two-tail fisher exact test. As this p-value is less than 0.05, we can reject the Null hypothesis that the probability of work is same for both treated and not treated is equal to 1 i.w true odds ratio is equal to 1. Also, we cannot reject the Alternate Hypothesis that the probability of work between people with treatment and no treatement is not same i.e true odds ratio is not equal to 1. 
+
+```
+```{r Question 1D}
+##Why do the p-values on the two-sided test differ? Which should you believe?
+
+#We observed the following p values t-test : 0.0185 , Chi-square test : 0.02, Fisher exact test : 0.0218. As we compare the different tests, Fisher exact test is preferred as its an asymptotic test and fits for the binary data such as to compare the treated/non treated data. Fisher test also provides an accurate significance level without relying on the assumptions where as asymptotic tests make assumptions about the data. When we have extremely large sample size, then it is infeasable to perform Fisher test. In such situations, we can prefer Chi-square test as the accuracy increases as the sample size increases.  
+
+```
+
+
+###Question 2
+
+```{r Question 2A 2B}
+
+y_uni = lm(work ~ treated, data)
+
+summary(y_uni)
+
+#Observed p-value is 0.02047. Less than 0.05 . So, we can reject the null hypothesis and not the Alternate hypothesis that the true difference in means of work in year between treated and not treated is not equal to 0.
+
+y_multivariate = lm(work ~ treated + age + educ + black + hisp + married, data)
+summary(y_multivariate)
+###We observed a higher adjusted R square value. This means that the additional input variables are adding value to the model. In univariate regression model , we observed a adjused R square value of 0.0061 where are the adjusted R square value is 0.0300 with the muti variate regressin model. This means a better fit of the model. 
+
+#Univariate  R-squared:  0.007437,	Adjusted R-squared:  0.006059 F-statistic: 5.395 on 1 and 720 DF,  p-value: 0.02047
+#Multivariate R-squared:  0.03803,	Adjusted R-squared:  0.02996 F-statistic: 4.711 on 6 and 715 DF,  p-value: 0.0001024
+
+#As seen above, the treatment indicator Coeff/estimate decreases slightly, but however it can still be considered that the treatment indicator still has majority of influence on the work. This slight decrease may be because of the introducing other variables into the equation. This is same in the case of Standard error and residual standard error where both decrease due to the introduction of other variables into the regression model. 
+
+#p-value t-test : 0.0185 , Chi-square test : 0.02, Fisher exact test : 0.0218
+#p-value for univariate model : 0.0205 and 0.0001 for multivariate. Comparing the p-values , regression is a better alternative model to the models used in the question 1. 
+
+
+
+```
+
+```{r Question 3A 3B 3C}
+f_treat <- data %>%  filter(treated == 1) %>% count(work)
+f_treat %>%  mutate (prob = n/sum(n))
+
+f_control <- data %>%  filter(treated == 0) %>% count(work)
+f_control %>%  mutate (prob = n/sum(n))
+
+
+#People who benefots from treatment : Bounds of joint distribution are [0.07, 0.30]
+#People who loses from the treatment : Bounds of joint distribution are [0.00, 0.23]
+
+```
+
+```{r Question 4A 4B}
+
+#From given information 
+#             Not affected       Affected
+# Moderna       14329              269
+# Pfizer        21569              100
+
+#Fisher
+Fisher_data <- matrix(c(14329, 269, 21569, 100), nrow=2)
+fisher.test(Fisher_data, alternative = "two.sided", conf.level = 0.95)
+
+
+
+
+#Observed p-value < 2.2e-16 two-tail fisher exact test is less than 0.05. So we can reject the null hypothesis that vaccines are equally effective (or) i.e true odds ratio is equal to 1) Also we cannot reject the alternate hypothesis that the vaccines are not equally effective (or) efficacy is not same for both i.e true odds ratio is not equal to 1.
+
+
+
+
+#B These are the actually numbers from the treated observations of the Moderna and Pfizer clinical trials. Explain why this is not a legitimate experimental trial.
+
+#Two arguments here. One is we donot have data of a person in two cases where in one case a vaccine is administered and other case where the vaccine is not administered. In case, we have both the data of a person, we can effectively compare the results in both the cases i.e vaccinated state and unvaccinated state. As we donot have the complete data, we cannot construct a counterfactual which deems these experimental trials cannot be considered legitimate. Thus, the comparision of efficacies of two vaccines cannot be considered legit.Another argument is, because we do not have a treatment and control group. If we were to have data of both the treatment and control group, then we can treat this experiment triel as legitimate. Thus the insights we got from comparison of efficacies of the two vaccines based on only the treatment group data is not legitimate.
+
+```
+

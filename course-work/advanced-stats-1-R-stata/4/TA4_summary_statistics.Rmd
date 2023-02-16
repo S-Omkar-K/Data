@@ -1,0 +1,172 @@
+---
+title: "TA Session 4"
+author: "Kaveri Chhikara"
+date: "10/21/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## General advice
+* Add good comments to your code. For your assignment, derive insights from the results. 
+* Google is programmers' best friend!
+* There is no 'standard right answer' for data science. 
+
+## Resources
+* Markdown: https://rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf
+* Plot: https://rstudio.com/wp-content/uploads/2015/03/ggplot2-cheatsheet.pdf
+
+## Keyboard shortcuts (macOS)
+* Insert chunks: cmd + option + i
+* Run current chunk: cmd + shift + enter
+* Run all chunks above: cmd + option + p
+* <-: option + -
+* %>%: cmd + shift + m
+* Select all variables appeared: cmd + shift + option + m
+
+## Happy coding :)
+
+### Load packages and data
+
+```{r}
+suppressMessages(library(dplyr)) # data manipulation
+library(ggplot2) # data visualization
+library(moments) # summary stat
+
+data <- read.csv("ppha312x2021.csv")
+```
+
+### Data cleaning
+Study raw data
+```{r}
+str(data) #str displays internal structure of the dataset
+```
+```{r}
+summary(data)
+```
+
+Delete income less than 0
+```{r}
+data <- data %>% filter(inctot >= 0)
+```
+
+Select population in an age group
+```{r}
+summary(data$age) #age is not numeric 
+data <- data %>% mutate(age = as.numeric(age))
+summary(data$age)
+data <- data %>% filter(age >= 25 & age <= 59)
+```
+
+
+
+### Manipulate data
+
+New column: Hispanic
+```{r}
+data %>% count(hispan)
+data$isHispanic <- ifelse(data$hispan == 'Not Hispanic', 0, 1)
+```
+
+
+```{r}
+#New Column : African American
+
+
+data %>% count(race)
+data_AA <- data %>% filter(race == 'Black/African American/Negro') 
+
+summary(data_AA)
+head(data_AA)
+
+```
+
+New column with more categories: Education
+```{r}
+data %>%  count(educd)
+
+data$edu_level[data$educd == '1 or more years of college credit, no degree'] <- 'some college'
+data$edu_level[data$educd == "Associate's degree, type not specified"] <- 'some college'
+
+summary(data$edu_level) # this is character variable
+data <- data %>% mutate(edu_level = as.factor(edu_level))
+
+summary(data$edu_level) # now a factor, appropriate for categorical variables. 
+```
+
+Filter: Race and Hispanic- if we want to limit the sample to white, non-Hispanic or Hispanic population
+```{r}
+data_target <- data %>%
+  filter((race == 'White' & isHispanic == 0) | isHispanic == 1)
+```
+
+### Summary statistics
+
+Most convenient: summary()
+```{r}
+summary(data_target$inctot[data_target$sex == 'Female'])
+summary(data_target$inctot[data_target$sex == 'Male'])
+```
+
+More functions to calculate mean, std, mode, skewness, deciles
+```{r}
+mean <- mean(data_target$inctot)
+std <- sd(data_target$inctot)
+skew <- skewness(data_target$inctot)
+deciles <- quantile(data_target$inctot, probs = seq(0,1,0.1))
+
+print(paste("mean", mean))
+print(paste("standard deviation", std))
+print(paste("skewness", skew))
+print(deciles)
+```
+
+Wrap things up in a function to avoid copy and paste
+```{r}
+stat <- function(DF, col) {
+  col_vector <- as.numeric(DF[[col]])
+  mean <- mean(col_vector)
+  std <- sd(col_vector)
+  skew <- skewness(col_vector)
+  deciles <- quantile(col_vector, probs = seq(0,1,0.1))
+  print(paste("mean", mean))
+  print(paste("standard deviation", std))
+  print(paste("skewness", skew))
+  print(deciles)
+}
+
+stat(data_target, 'inctot')
+stat(data_target, 'incwage')
+```
+
+### Graph
+
+Histogram of total income
+```{r}
+ggplot(data_target, aes(inctot)) +
+  geom_histogram(bins = 50) +
+  theme_classic() +
+  xlab('Total Income')
+```
+
+Histogram with different groups
+```{r}
+ggplot(data_target, aes(x=inctot, fill=sex)) +
+  geom_histogram(bins=30, color="#e9ecef", alpha=0.6, position = 'identity') +
+  scale_fill_manual(values=c("#69b3a2", "#404080")) +
+  theme_classic() +
+  labs(fill="") + 
+  scale_x_continuous(labels = function(x) format(x, scientific = FALSE))
+```
+
+Boxplot
+```{r}
+point <- format_format(big.mark = " ", decimal.mark = ",", scientific = FALSE)
+
+ggplot(data_target, aes(x=race,y=inctot)) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  scale_y_continuous(labels = function(x) format(x, scientific = FALSE))
+```
