@@ -1,0 +1,364 @@
+---
+title: "PS6_12265092"
+author: '12265092'
+date: "23/02/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list=ls())
+```
+
+
+```{r}
+
+library(tidyverse)
+#library(estimatr)
+library(Rcpp)
+library(readxl)
+library(haven)
+library(boot)
+library(lmtest)
+library(margins)
+library(mfx)
+```
+
+```{r}
+
+data <- read_dta("jtrain2.dta")
+
+```
+
+```{r}
+
+
+summary(data)
+
+```
+
+
+```{r}
+
+#a
+
+#summary(data)
+
+summary(factor(data$train, labels = c(0,1)))
+
+#As we can see here, 185 men in the sample participated 
+#in the job training program
+
+summary(data$mostrn)
+
+##As we can see here , the hugherst number of months a man actually participated
+## in the program is 24.
+
+```
+
+
+```{r}
+
+#b
+
+data$train <- as.numeric(data$train)
+
+reg_b = lm(formula = train ~ unem74 + unem75 + age + educ + 
+             black + hisp + married, data = data)
+
+
+summary(reg_b)
+
+
+
+#Coefficients:
+#             Estimate Std. Error t value Pr(>|t|)  
+#(Intercept)  0.338022   0.189445   1.784   0.0751 .
+#unem74       0.020880   0.077294   0.270   0.7872  
+#unem75      -0.095571   0.071902  -1.329   0.1845  
+#age          0.003206   0.003403   0.942   0.3467  
+#educ         0.012013   0.013342   0.900   0.3684  
+#black       -0.081666   0.087732  -0.931   0.3524  
+#hisp        -0.200017   0.116971  -1.710   0.0880 .
+#married      0.037289   0.064404   0.579   0.5629 
+
+#Residual standard error: 0.4917 on 437 degrees of freedom
+#Multiple R-squared:  0.02238	
+#Adjusted R-squared:  0.006722 
+#F-statistic: 1.429 on 7 and 437 DF
+#p-value: 0.1915
+
+##H0 = All slope coefficients =0 
+
+#We observe a fstatistic of 1.429 on DF k =7 and n-k-1 = 437
+#Critical value of f distribution at 5% level in these conditions is 2.01
+#As the observed statistic value is less than the critical value, we cannot 
+#reject the null hypothesis. Thus using OLS we cannot say with evidence that the 
+#independent variables in the regression are significant in explaining the 
+#dependent variable train.
+
+
+```
+
+```{r}
+#c
+
+probit_c <- glm(formula = train ~ unem74 + 
+                  unem75 + age + educ + black + hisp + married, 
+                    family = binomial(link = "probit"), data = data)
+
+summary(probit_c)
+
+probit_c_1 <- glm(formula = train ~ 1, 
+                    family = binomial(link = "probit"), data = data)
+
+
+summary(probit_c_1)
+
+lrtest(probit_c, probit_c_1)
+
+
+#H0 = Coefficients of all independent variables in regression = 0
+# We observe a Chisquare statistic value of 10.18
+# The critical value of chisquare distribution 
+#at 5% at the same condition is of value = 14.07
+#We see that the observed statistic is less than the critical value
+#Using above, using Probit , we cannot say that the independent variables are
+#significant in explaining the dependent variable.
+
+
+c_psuedoR2 <- 1 - (probit_c$deviance) / (probit_c$null.deviance)
+
+
+#c_psuedoR2 <- 1 - logLik(probit_c)[1]/logLik(probit_c)[1]
+
+c_psuedoR2
+
+```
+
+```{r}
+#d
+
+#In b, we observed that the independent variables are not statistically 
+#significant in explaining the dependent variable
+#Similarly, we observed in c. 
+#Hence, using results from b and c, participation in job training can be 
+#treated as exogenous for explaining the 1978 unemployment status.
+
+
+```
+
+```{r}
+
+#e
+
+reg_e <- lm(formula = unem78 ~ train, data = data)
+
+summary(reg_e)
+
+#Intercept = 0.35385
+#Coefficient estimate of variable train = -0.1106
+
+#Equation form 
+# unem78^ = 0.35385 -0.1106*train^
+
+
+#Interpretaion of coefficient
+#Participation in training has reduced the probability 
+#of being employment in 1978 by 11%
+
+#F-statistic: 6.265 on 1 and 443 DF,  p-value: 0.01267
+#H0 = Coefficient of train = 0 
+#At 5% significance, the Observed p-value is less than 0.05, so we can reject
+#the null hypothesis 
+#We cannot reject the null hypothesis that the participation in training 
+#is significant in explaining the unemployment in 1978
+
+
+```
+
+```{r}
+#f
+
+probit_f <- glm(formula = unem78 ~ train, 
+                family = binomial(link = "probit"), data = data)
+
+summary(probit_f)
+
+
+#Observed p value = 0.0125 
+#At 5% level, observed p-value is less than 0.05
+#Hence we can reject the null hypothesis that train variable is insignificant
+#And we cannot reject the alternate hypothesis that participation in training
+#is significant in explaining the unemployment in 1978
+
+
+
+probit_f_1 <- glm(formula = unem78 ~ 1, 
+                family = binomial(link = "probit"), data = data)
+
+summary(probit_f_1)
+
+lrtest(probit_f, probit_f_1)
+
+#  #Df  LogLik Df  Chisq Pr(>Chisq)  
+#1   2 -271.58                       
+#2   1 -274.74 -1 6.3043    0.01204 *
+
+
+#H0 = Coefficient of train = 0
+#Observed chi square statistic is 6.3043
+#At df =1, 5% level, the critical value of chisquare distribution is 3.84
+#As the observed statistic is less than the critical value, we can reject the 
+#null hypothesis that the variable train is insignificant
+#And we cannot reject the alternate hypothesis that the variable tain is
+#significant in explaining unem78 using the model
+
+f_psuedoR2 <- 1 - (probit_f$deviance) / (probit_f$null.deviance)
+
+f_psuedoR2
+
+
+#It doesnt make sense to compare both the coefficients. 
+#Reason is: In linear model the interpretaion of coefficients is direct. 
+#In lm the coefficients are directly the marginal effect
+#In probit model, marginal effect is not the coefficient
+#To interpret the coefficient of probit model, we need to calculate 
+#the marginal effect of the regressor on the outcome while holding all other 
+#variables constant.
+
+
+
+```
+
+```{r}
+
+#g
+
+fitted_f <- predict(probit_f, type = "response")
+
+summary(fitted_f)
+
+head(fitted_f)
+
+
+fitted_e <- predict(reg_e, type = "response")
+
+summary(fitted_e)
+
+head(fitted_e)
+
+
+#They are identical
+
+#As we have only one binary variable train and only one outcome variable unem78
+#which is also binary, we will get a perfect fit when we perform regression. 
+#This doesnt change with different regression functions. Thus they are identical.
+#This simply means that the estimated probability of unem78 is actually the
+#observed probability of the independent variable train.
+
+
+
+#We prefer Probit or Logit models when evaluating binary independent variable.
+#This is because using linear model to explain a binary variable will result
+#in heteroskedasticity. Also the predicted values do not follow the 
+#boundary conditions of binary and usually go beyond 0 and beyond 1
+
+#In Probit model, the resulted model is distributed normally. Thus the 
+#depended variable or the outcome predicted will be either 0 or 1. This 
+#satisfies the criteria of the dependant variable to be a binary. For this case,
+#we can use the Probit model, but usually Logit has more benefits, below.
+
+
+#Logit model assumption is that the model is logistically distributed. 
+#Thus the predicted outcome is again a 0 or 1, happens or doesnt happen. THis
+#satisfies initial criteria of outcome variable to be a binary variable.
+#While the marginal effects produced by both the Probit and Logit models 
+#are same, the coefficients differ by a factor of 1.6. The benefit that the 
+#Logit model has is that the transformations possible in the Logit model 
+#makes it easy to interpreting them. 
+
+
+
+```
+
+
+
+```{r}
+
+#h
+
+
+#variables from b
+#unem74 + unem75 + age + educ + black + hisp + married
+
+reg2_e <- lm(formula = unem78 ~ train + unem74 + unem75 + age + 
+               educ + black + hisp + married, 
+                family = binomial(link = "probit"), data = data)
+
+summary(reg2_e)
+
+#Residual standard error: 0.4554 on 436 degrees of freedom
+#Multiple R-squared:  0.0462,	Adjusted R-squared:  0.0287 
+#F-statistic:  2.64 on 8 and 436 DF,  p-value: 0.007796
+
+fitted2_e <- predict(reg2_e, type = "response")
+
+
+summary(fitted2_e)
+
+head(fitted2_e)
+
+probit_h <-  glm(formula = unem78 ~ train + unem74 + unem75 + age 
+                  + educ + black + hisp + married, 
+                      family = binomial(link = "probit"), data = data)
+
+fitted_h <- predict(probit_h, type = "response")
+
+
+summary(fitted_h)
+
+head(fitted_h)
+
+#The fitted values are almost identical in the same varying by a small factor.
+
+correlation_fitted <- cor(fitted2_e, fitted_h)
+
+correlation_fitted
+
+#Correlation between fitted values of linear model and the fitted values of 
+#the probit model is ~0.9932445
+
+```
+
+
+```{r}
+
+#i
+
+#summary(margins(probit2_f, variables = "train"))
+#summary(effects(probit2_f, effect = "marginal",
+ #    marg.type = aveacr, varlist = train) )
+#summary(effects(probit2_f, effect = "discrete",
+ #              marg.type = atmean, varlist = train)  )
+
+
+
+probit_APE <- probitmfx(unem78 ~ train + unem74 + unem75+ age + educ + black 
+                        +hisp + married, data = data)
+
+APE <-  probit_APE$mfxest[1]
+
+APE 
+
+
+#Observed APE is -0.1143
+#OLS estimate from part h = -0.117
+
+#The estimate APE is almost same as the OLS estimate found in part h
+#Interpretation
+#Probit:Average partial effect on unemployment in 1978 is -0.1143 times of train
+#Linear: Effect on unemployment in 1978 is -0.117 times of train
+
+```
+

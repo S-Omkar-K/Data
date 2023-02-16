@@ -1,0 +1,439 @@
+---
+title: "PS8_12265092"
+author: '12265092'
+date: "09/03/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list=ls())
+```
+
+
+```{r}
+
+library(tidyverse)
+library(estimatr)
+library(Rcpp)
+library(readxl)
+library(haven)
+library(boot)
+library(lmtest)
+library(margins)
+library(mfx)
+library(ivreg)
+library(aod)
+
+```
+
+```{r}
+
+data <- read_dta("voucher.dta")
+
+```
+
+
+```{r}
+
+#1a
+
+table(data$choiceyrs)
+
+# Of 990 students in sample, 56 student attended a choice school for 4 years
+
+table(data$selectyrs)
+# 108 students had vouchers available for 4 years
+# Of 990 students in sample, 468 students never awarded a voucher
+
+
+```
+
+```{r}
+
+#1b
+
+reg1b <- lm(formula = choiceyrs ~ selectyrs, data = data)
+
+summary(reg1b)
+
+#Residual standard error: 0.576 on 988 degrees of freedom
+#Multiple R-squared:  0.7898,	
+#Adjusted R-squared:  0.7896 
+#F-statistic:  3713 on 1 and 988 DF, 
+#p-value: < 2.2e-16
+
+#The p-value at 5% significance level is less that 0.05. So we can safely 
+#reject the null hypothesis that coefficient of 'selectyrs' is zero
+#Also the alternate hypothesis cannot be rejected
+#The t-statistic calculated says that the 'selectyrs' is statistically
+#significant for estimating 'choiceyrs'
+
+#The coefficient 0.77 shows that selectyrs and choiceyrs are positively
+#correlated. This is as expected because the increase in years of voucher will
+#increase the number of years student attends choice school
+
+#Two point criteria for valid IV
+
+#Correlation : selectyrs, choiceyrs are positively correlated
+#Zero correlation with error term u
+  #We can say that selectyrs to be uncorrelated with 'u' because it can be 
+  #understood that the voucher is offered among those who applied, the other
+  #unmeasureable variables for example student background donot influnce 
+  #the variable selectyrs. Thus we can say selectyrs is uncorrelated with the 
+  #error term 'u' and is a valid IV choice for choiceyrs. 
+
+```
+
+
+```{r}
+#1c
+
+reg1c <- lm(formula = mnce ~ choiceyrs, data = data)
+
+summary(reg1c)
+
+#Residual standard error: 20.75 on 988 degrees of freedom
+#Multiple R-squared:  0.01222,	Adjusted R-squared:  0.01122 
+#F-statistic: 12.22 on 1 and 988 DF,  
+#p-value: 0.0004943
+
+#Coefficient -1.837
+
+#The p-value at 5% significance level and the t-statistic calculated says that
+#the variable 'choiceyrs' is statistically significant in estimating 'mnce'
+#We expect the percentile score on the math test in 1994 increase with the 
+#increase in number of years the student attended school in the period 
+#1991 to 1994
+#However, we see that the coefficient is negative, which is in contrary to the 
+#expectations. 
+
+reg1c_1 <- lm (formula = mnce ~ choiceyrs + black + hispanic + female, data = data)
+
+summary(reg1c_1)
+
+#Coefficients:
+#            Estimate Std. Error t value Pr(>|t|)    
+#(Intercept)  57.1219     1.6567  34.479  < 2e-16 ***
+#choiceyrs    -0.5652     0.5307  -1.065    0.287    
+#black       -16.0174     1.7944  -8.926  < 2e-16 ***
+#hispanic    -13.4029     2.3168  -5.785 9.73e-09 ***
+#female        1.3527     1.2758   1.060    0.289 
+
+#p-value: 0.0004943
+
+#We see that the from the p-value and t statistic calculate above, we see that
+#choiceyrs variable is now not statistically significant soon as we added other
+#variables black, hispanic, female to our model. Among the new variables, 
+#only black and hispanic are statistically significant where as female is not
+#statistically significant
+
+
+
+```
+```{r}
+
+#1d
+
+#Why is choiceyrs a endogenous in the equation with choiceyrs, black, hispanic, female
+
+reg1d <- lm(formula = choiceyrs ~  black + hispanic + female, data = data)     
+summary(reg1d)
+
+
+#Coefficients
+#black        0.92456    0.10357   8.927   <2e-16 ***
+#hispanic     1.15003    0.13411   8.575   <2e-16 ***
+#female       0.10198    0.07648   1.333   0.1827
+
+#p-value: < 2.2e-16
+
+#We see from the regression results that the variables black and hispanic
+#are statistically significant in estimating choiceyrs and variable female is
+#not. This means that the number of years a student attended choice schools 
+#in period 1991-1994 is dependent on race. This is like multicollinearity.
+#Thus the choiceyrs is a endogenous variable in the equation with the 
+#variables choiceyrs, black, hispanic, female
+
+
+
+```
+
+```{r}
+#1e
+
+#use selectyrs as IV for choiceyrs
+
+ivreg1e <- ivreg(formula = mnce ~ choiceyrs + black + hispanic + female |
+                     selectyrs + black + hispanic + female, data = data)
+
+summary(ivreg1e)
+
+
+#Coefficients:
+#            Estimate Std. Error t value Pr(>|t|)    
+#(Intercept)  57.0680     1.6577  34.426  < 2e-16 ***
+#choiceyrs    -0.2413     0.6053  -0.399    0.690    
+#black       -16.3169     1.8148  -8.991  < 2e-16 ***
+#hispanic    -13.7754     2.3412  -5.884 5.49e-09 ***
+#female        1.3197     1.2763   1.034    0.301 
+
+#p-value: < 2.2e-16 
+
+#selectyrs as IV for 'choiceyrs' doesnt produce a positive effect on 'mnce' 
+
+#The variable black and hispanic are statistically significant at the
+#5% level as seen from the t value calculated -8.991(Pr 2e-16) and -5.884 
+#(Pr 5.49e-09). The variable female is not statistically significant 
+#as seen from the t-statistic calculated 1.034 (Pr 0.301) at 5% significance 
+#level. Thus we can say that mnce is more dependent on the race (black or
+#hispanic) of the student.
+
+
+
+```
+
+```{r}
+#1f
+
+reg1f <- lm(formula = mnce ~ choiceyrs + black + hispanic + 
+              female + mnce90, data = data)  
+
+summary(reg1f)
+
+#Coefficient of choiceyrs = 0.4106
+
+
+
+
+ivreg1f <- ivreg(mnce ~ choiceyrs + black + hispanic + female + mnce90|
+                     selectyrs + black + hispanic + 
+                          female + mnce90, data = data)
+
+
+summary(ivreg1f)
+
+#Coefficient of choiceyrs = 1.79938
+
+#The coefficient of choiceyrs in IV is 1.79938 which is greater than the 
+#coefficient of choiceyrs in OLS in 0.4106. The variable is statistically 
+#significant in IV
+
+
+#The p-value 0.037 with t-statistic 2.092 for choiceyrs shows that the 
+#statistically significance. This is a large effect that each year in a choice 
+#school is worth 1.7993 times in crease in the math percentile score.
+
+```
+
+```{r}
+#1g
+
+summary(data$mnce90)
+
+nobs(ivreg1e)
+
+nobs(ivreg1f)
+
+
+#The stark difference in the number of observations in both the iv regressions
+# 990 and 328 can be acoounted for low precision in the coefficients 
+#estimated in 1f which can be a reason for why the analysis 1f to be unconvincing
+
+
+```
+```{r}
+#1h
+
+ivreg1h <- ivreg(formula = mnce ~ choiceyrs1 + choiceyrs2 + choiceyrs3 + 
+                   choiceyrs4 + black + hispanic + female + mnce90|
+                   selectyrs1 + selectyrs2 + selectyrs3 + selectyrs4 + 
+                   black + hispanic + female + mnce90, data = data)
+
+summary(ivreg1h)
+
+
+#From the t-statistic and p value observed above, we can say that the variables
+#choiceyrs4 and black are statistically significant. 
+#From the coefficeints
+#The coefficient of variable black -3.137 indicates the negative correlation
+#between black race and the math percentile score
+#The coefficient of variable choiceyrs4 13.925 indicates that 4 additional 
+#years at the school of choice increases the math percentile score in 1994 
+#mnce by 13.925 times
+#This makes sense as the coefficient found here is in line 
+#with the coefficients in parts d,e and f
+
+```
+
+
+
+
+```{r}
+
+#Question 2
+
+#Corn - percapita consumption of corn in bushels at country level
+#price  price per buschel of corn
+#income - percapita country income
+#rainfall - inches of rainfall during last corn-growing season
+
+
+#from the given equations we can say that the exogenous variables are
+#rainfall and income and the endogenous variables are corn and price as they are
+#dependent on the rainfall and income variables.
+
+#Equation 1 is the demand equation as the equation demonstrates the consumption
+#of corn in form of price of the corn and the income of country. Thus this is
+#the demand function
+
+#Equation 2 is supply function. Supply or availability of corn can be said from
+#the rainfall in the last season , usually increase in rainfall leading to 
+#increase in supply of corn and also depends on the price. Thus 2 is supply eqn.
+
+```
+
+
+
+```{r}
+
+#Question 3
+
+#a
+
+#In the basic model where only poorhealth is estimated on smokes yes or no
+#the tax can be a valid instrument if we observe that we observe some correlation 
+#between smoker and other health factors or if we see some correlation with 
+#the error term u. Criteria for the same can be evaluated if below is true
+# Cov(tax, u ) = 0. tax is not correlated with error term u 
+# Cov(tax, smoker) != 0. tax is correlated with smoker
+
+
+#b
+#We need to run the following regressions in order to obtain instrumental 
+#variables estimator
+
+#smoker = alpha0 + alpha1*tax + u 
+#smoker^ = alpha0^ + alpha1^*tax   
+
+#and
+
+#poorhealth = beta0 + beta1*smoker + u    
+#poorhealth^ = beta0^ + beta1^*smoker  
+
+
+#c
+
+#Tax as a valid instrument, ommitting does not create ommitted variable bias while 
+#estimating poorhealth. However, we can say that it can result in 
+#multicollinearity, depends on the strenght of tax as a valid instrument on 
+#regression for variable smoker.
+#As tax is a valid instrument, that means the correlation between tax and the 
+#error term u is zero. And the error term u accounts for the ommitted variable 
+# bias in the regression. So ommitting tax will not create ommitted variable 
+#bias in regression.These two statemtnts says that variable tax is related to
+#poorhealth via smoker. Thus we may not get supportive coefficient to prove
+#statistical significance of tax in OLS but can prove multicollinearity with 
+#a less precision.
+
+
+
+```
+
+
+```{r}
+
+#Question 4
+
+votedata <- read_dta('vote2.dta')
+
+
+
+```
+
+
+```{r}
+
+#a
+
+#Difference the equation across two years
+
+#Regression
+
+reg4a <- lm_robust(cvote ~ clinexp + clchexp + cincshr, 
+                   data = votedata)    
+
+summary(reg4a)
+
+#p value 1.037e-09
+
+#From the values we observed in the regression summary table, at 5% significance 
+#level we can say that cincshr is statistically significant whereas the 
+#other two variables clinexp and clchexp are not statistically 
+#significant in estimating cvote
+
+
+
+```
+
+
+```{r}
+#4b
+
+wald.test(Sigma = vcov(reg4a), b = coef(reg4a), Terms = 2:3)
+
+#The p value of 0.19 is more than 0.05, so we cannot reject the null hypothesis
+#THus we can say that the coefficients of the variables delta_ln(inexp) and 
+#delta_ln(chexp) are zero and these variables are statistically insignificant
+#Thus we can say that the ln change in incumbent expenditures and the ln change
+#in challenger expenditures do not have joint role in estimating the incumbent
+#vote share
+
+
+```
+
+```{r}
+#4c
+
+reg4c <- lm_robust(cvote ~  cincshr, data = votedata)    
+
+summary(reg4c)
+
+#The t statistic 5.818 and p 2.817e-05 prove that the variable delta_incshr is 
+#statistically significant. The coeffcient estimate is 0.2176 which means that
+#the incumbent's share of vote rises by 2.176 percentage points for an increase
+#of incumbents share of spending by 10 percentage points
+
+
+
+```
+
+```{r}
+
+#vote_rptchall <- vote %>% filter(rptchall == 1)
+#dim(vote_rptchall)
+
+table(votedata$rptchall)
+
+rptchall1 <- votedata %>% filter(rptchall == 1)
+
+rptchall1
+#rptchall1$incshr9088 <- rptchall1$incshr90 - rptchall1$incshr88
+
+reg4d <- lm_robust(cvote ~  cincshr, data = rptchall1)    
+summary(reg4d)
+
+#The t statistic of 1.494 with p-value 0.1453 greater than 0.05 says that the 
+#variable difference in increase in share is not statistically significant
+#in estimating the votes. 
+#By using the pairs that have repeated challengers, 
+#we are eliminating any unmeasurable quality effects of the incumbent. THe 
+#assumption that holds true here is that the quality characteristics of the
+#incumbent will not change over the period 1988 - 1990. THis is 
+#because we are differencing and the challenger is same in both times making the
+#approach preferable.
+
+  
+
+```
+

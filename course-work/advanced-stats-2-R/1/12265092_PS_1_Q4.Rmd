@@ -1,0 +1,175 @@
+---
+title: "PS1"
+author: "12265092"
+date: "19/01/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+rm(list=ls())
+
+library(haven)
+library(tidyverse)
+
+
+
+data <- rep(c(1,0),times = c(600,400))
+
+#data
+
+data <- as.data.frame(data)
+colnames(data) <- c("treatment_status")
+set.seed(3132022)
+
+##Create a dataset containing 1000 observations. 
+##Set a seed of 3132022 and construct a variable treated that takes a value of 1 for the  first  600  observations  and  a  value  of  0  for  the  last  400  observations.  
+##Simulate  two  random variables X1 and X2, where X1 and X2 are each uniformly distributed on [0,1]. Let ui = X1i and Ti = -2 * X2i + 1. Then construct the variables Yic = 5 + ui  and Yit 5 + Ti + ui.
+
+X1 <- runif(1000,min = 0 , max = 1)
+X2 <- runif(1000,min = 0, max = 1)
+
+ui <- X1
+Ti <- (-2*X2) + 1
+
+Yic <- 5 + ui
+data$control <- Yic
+
+Yit <- 5 + Ti + ui
+data$treatment <- Yit
+
+## a) Define a new variable Yobs equal to the length of hospitalization that would be observed for each  individual,  given  their  actual  treatment  status.
+
+Yobs = ifelse(data == 1, Yit, Yic)
+
+#Yobs
+
+#data <- data %>% mutate(Yobs = ifelse(treatment_status == 1, Yit , Yic))
+
+```
+
+```{r}
+
+
+## b) Use  Yobs  to  compute  an  estimated  average  treatment  effect  on  length  of  hospitalization  by comparing  the  length  of  hospitalization  for  the  treated  and  control  groups  (use  summary  statistics  rather  than  a  regression).
+
+b_1 <- data %>% group_by(treatment_status) %>% summarise(avg = mean(Yobs))
+
+b_2 <- data %>% group_by(treatment_status) %>% summary(Yobs)
+
+b_1
+
+b_2
+
+#calculate from treated group and control group
+Ti_estimate  <- mean(Yobs[1:600]) - mean(Yobs[601:1000])
+
+Ti_estimate
+
+print(paste("Eestimated  average  treatment  effect  = " , Ti_estimate))
+```
+
+
+
+```{r}
+## c) What is the population mean of Ti? Is your answer to Part (b) exactly equal to this population mean? Why or why not?
+
+data$Ti  <- Ti
+
+c <- mean(data$Ti)
+
+c
+
+print(paste("Population mean of Ti = " , c))
+
+
+
+
+```
+### Response for c) The estimated treatment effect calculated in part b is of value -0.0216501270141451 where as the population mean of treatment calculated with the sample i.e average treatment effect calculated with the samples is -0.0126721069491468. Both are not equal.This is due to the reason that we CANNOT observe what happens to a person in both treatment and control states. This is a fundamental problem that we face while analysing the data. If only we could observe the outcome in both states, we could simply compare the two observed outcomes and determine the effect of treatment on a person. 
+
+##Using the notations in Rubins model. Suppose, we have a person (i) and intervention (t) whose effects we want to estimate as compared to a control (c) which is a lack of intervention. The person i can be in either groups i.e treated group denoted by state of world S = (t) or control group denoted by state of world S = (c). The outcomes before the treatment is assigned , we imagine measure of interest Yit (associated with State t) and measure of interest Yic (associated with state c). The effect of treatment (or) the causal effect (or) difference in potential outcomes can be determined using Yit - Yic  i.e difference of the outcomes in the two states. But however, once the state of world S for a person is assigned, we cannot observe both the outcomes. Thus without the counterfactual, we cannot determine the Average treatement effect Yt - Yc.
+
+```{r}
+
+## d) Calculate the mean of Ti in the sample (using all 1000 observations). Is the mean of Ti exactly the same as your estimate from Part (b)? Why or why not? 
+
+Ti_sample <- mean(Yit - Yic)
+
+print(paste( "Mean of Ti in the sample = " , Ti_sample))
+
+
+
+
+
+```
+### Response for d) The estimated treatment effect calculated in part b is of value -0.0216501270141451 where as the sample mean of treatment calculated with the sample is -0.0126721069491468. Both are not equal.This is due to the reason that we CANNOT observe what happens to a person in both treatment and control states. This is a fundamental problem that we face while analysing the data. If only we could observe the outcome in both states, we could simply compare the two observed outcomes and determine the effect of treatment on a person. 
+
+##Using the notations in Rubins model. Suppose, we have a person (i) and intervention (t) whose effects we want to estimate as compared to a control (c) which is a lack of intervention. The person i can be in either groups i.e treated group denoted by state of world S = (t) or control group denoted by state of world S = (c). The outcomes before the treatment is assigned , we imagine measure of interest Yit (associated with State t) and measure of interest Yic (associated with state c). The effect of treatment (or) the causal effect (or) difference in potential outcomes can be determined using Yit - Yic  i.e difference of the outcomes in the two states. But however, once the state of world S for a person is assigned, we cannot observe both the outcomes. Thus without the counterfactual, we cannot determine the Average treatement effect Yt - Yc.
+
+
+
+
+```{r}
+
+## e) Suppose you are a researcher that is reviewing the outcomes of this trial. What could you conclude about the effect of this treatment on a given individual? (4 points) 
+
+Ti_estimate_2 = mean(Yobs[1:600]) - mean(Yobs[601:1000])
+
+Ti_estimate_2
+
+print(paste("Estimated Average treatment effect Yit - Yic = ", Ti_estimate_2))
+
+###The estimated average treatment effect is -0.0216501270141451
+
+```
+
+### Response for e ) The estimated average treatment effect is -0.0216501270141451. The estimate firs of all cannot confirm if a particular unit would gain or lose from the treatment. But this estimate can tell what happened in the sample. As the value is negative, it can be said that the effect of treatment reduced the lenght of hospitalization. It might vary in groups among the sample where some of the population might act against the mean effect. 
+
+
+```{r}
+
+### f) In this simulation, we know the true distribution of Ti. (Note that this is seldom if ever possible in real life.) What is the range of treatment effects in the population? What share of the population would benefit from the treatment, and what share would be harmed by the treatment?
+
+##Range
+
+range <- max(Ti) - min(Ti)
+
+print(paste("Range of treatment effects in population is = ", range ))
+
+
+##Share beneffitted 
+
+beneffitted <- ifelse(Yit < Yic, 1, 0)
+
+total_population <- length(beneffitted)
+
+share_beneffitted <- (sum(beneffitted)/total_population)
+
+percentage_benefitted <- share_beneffitted * 100
+
+print(paste("Share of population benefitted from treatment = ", share_beneffitted))
+
+print(paste("Percentage of population benefitted from treatment = ", percentage_benefitted))
+
+
+##Harmed population
+
+## where Yit > Yic, similar to above
+
+harmed_population <- ifelse(Yit >Yic, 1, 0)
+
+
+share_harmed <- sum(harmed_population)/total_population
+
+percentage_harmed <- share_harmed * 100
+
+print(paste("Share of population harmed from treatment = ", share_harmed))
+
+print(paste("Percentage of population harmed from treatment = ", percentage_harmed))
+
+```

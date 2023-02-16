@@ -1,0 +1,135 @@
+---
+title: '12265092'
+author: '12265092'
+date: "10/02/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set
+rm(list=ls())
+```
+
+
+```{r}
+
+library(tidyverse)
+library(estimatr)
+library(Rcpp)
+library(readxl)
+library(haven)
+library(boot)
+
+
+data <- read.csv("cpsmar12_chi.csv")
+
+```
+
+```{r}
+
+
+reg_wages <- lm(wages ~ age, data = data)
+
+summary(reg_wages)
+
+
+##  COEFF_1 of age observed in the summary = 732.6
+#For 1 year increase in age, the total wages of an individual 
+##would increase at an estimate of 732.6 dollars
+
+```
+
+```{r}
+##Transform ages so that its measured in cents
+
+data <- data %>% mutate(wages_cents = wages *100)
+
+reg_wages_cents <- lm(wages_cents ~ age, data = data)
+summary(reg_wages_cents)
+
+##COEFF_2 of age observed in the summary = 73262
+###For 1 year increase in age, the total wages of an 
+##individual would increase at an estimate of 73262 cents
+
+```
+
+```{r}
+
+##Transform age so that it is now measured in months
+
+data <- data %>% mutate(age_months = age*12)
+
+reg_age_months <- lm(wages_cents ~ age_months , data = data)
+
+summary(reg_age_months)
+
+##Coefficient of age_monts observed = 6105.2
+##COEFF_3 = 6105.2
+
+##For 1 month increase in age of an individual
+##the wages will increase by an estimate of 6105.2 cents
+
+##Relationship between COEFF_1, COEFF_2 
+##COEFF_2 = COEFF_1 * 100
+##As we multiplied the independent variable wages in dollars 
+##to transform it into cents, the estimated coefficient of the 
+##resultant variable is multiplied by 100. Hence we get COEFF_2 as 100 * COEFF_1
+
+##Relationship between COEFF_2 and COEFF_3
+##COEFF_3 = COEFF_2/12 => (COEFF_1*100/12)
+##As we multiplied the dependant variable age in years
+##to transform it into months, the estimated coefficient of the 
+##resultant variable is divided by 12
+
+
+
+```
+
+
+```{r}
+data <- data %>% mutate(male_collgrad = male * collgrad)
+
+
+reg_b1 <- lm(wages ~ male + collgrad + male_collgrad, data = data)
+
+summary(reg_b1)
+
+##Coefficient of the interaction term male_collgrad = 27170
+## Males who have a colelge degree earn 27170 dollars 
+##more in wages as compared to females without a college degree
+##The interaction term is basically a difference between wages of males
+##with college degrees and others without college degrees
+
+```
+
+
+
+```{r}
+
+reg_b2 <- lm(formula = wages ~ collgrad + male_collgrad, data = data)
+
+summary(reg_b2)
+
+##Coefficient of the interaction term male_collgrad = 38539
+## Males who have a colelge degree earn 38539 dollars 
+##more in wages as compared to females without a college degree
+##The interaction term is basically a difference between wages of males
+##with college degrees and others without college degrees
+
+
+##As we observed in both the regressions , all the coefficients are 
+##statistically significant
+##It is obvious the postivie correlation between males and male_collgrad
+##If male is 0, then male_collgrad = 0, because male_collgrad = male * collgrad
+##As we have ommitted the males variable in the second regression, 
+##and it is positively correlated with another variable in regression
+##we observe an Ommitted variable bias in the coefficients
+##of the regression in second regression. 
+##Now to determine the sign of bias, look at the sign of coefficient
+##as we already know the sign of correlation.
+##From first regression, we say the estimated coefficient is positive
+##Hence it is positive bias, as coeeficient and correlation are positive
+##Thus a positive bias is induced in the coefficients of second regression 
+##as we ommitted a variable males that is correlated with another variable
+##in the regression equation.
+```

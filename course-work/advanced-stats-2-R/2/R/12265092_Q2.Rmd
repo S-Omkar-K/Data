@@ -1,0 +1,256 @@
+---
+title: "12265092_Q2"
+author: '12265092'
+date: "26/01/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+rm(list=ls())
+```
+
+#Given one possible estimating equation price_i = B0 +B1dist_i + B2area_i + u_i
+
+
+```{r}
+set.seed(11111)
+
+library(tidyverse)
+library(estimatr)
+library(Rcpp)
+library(readxl)
+library(haven)
+library(boot)
+
+load("E:/Winter_22/Adv_stats/2/R/kielmc.RData")
+
+```
+
+
+```{r}
+
+#Convert distance into miles by dividing it by 5280
+#Convert area into thousands of sqft by dividing it by 1000
+
+data_lm <- data %>% mutate(dist = dist/5280) %>% mutate(area = area/1000)
+
+
+```
+```{r}
+
+##a_1 what sign do you expect to get for B2
+##B2 is the coefficient of area variable. We expect a positive sign for B2.
+##It can be justified as, the more the area of a house, more the price.
+
+##In other words, price increases with increase in area, 
+## decreases with decrease in area while holding
+##all other variables in the model constant.
+
+##A unit increase in area can reasonably increase 
+##the price of the house. Thus sign is positive.
+
+a_2 <- lm(formula = dist~area, data=data_lm)
+
+summary(a_2)
+
+
+##Q2 a_2
+##As per a report commissioned by GAIA shows that 79% of the 
+##garbage incinerators in the US are located in low income
+##and/or communities of color.
+
+##Above stat has been taken from Wastedive, link below
+##https://www.wastedive.com/news/majority-of-us-incinerators-located-in-marginalized-communities-report-r/555375/
+
+##It can be reasonably assumed that the low income communities
+## or marginalized communities live in smaller houses 
+##as compared to other households, we can expect the 
+##distance from garbage incinerator and area of house are 
+##positively correlated. In other words, bigger houses are
+##are far from the garbage incinerators, thus as distance from 
+##incinerator increases, the area of house also increases. 
+##But distance from incinerator is not the only reason for the 
+##increase of area of house, there can be many other variables.
+
+##The estimate for coefficient of area when regression of dist
+##on area is positive with value of 0.2977 and 
+## sd area of 0.2856. This shows positive correlation
+## dist and area. Thus we can say that area of the house(area)
+##can be considered a control variable
+# in regression for distance of incinerator (dist).
+##More over the p value(0.021) rejects the hypothesis 
+##that the coefficient of control variable can be zero.
+
+```
+
+##
+
+```{r}
+
+a_3 <- lm(formula = price~dist, data = data_lm)
+
+summary(a_3)
+
+## a_3 
+##Yes, there would be omitted variable bias introduced 
+## as we have omitted a variable that is correlated
+##with the other independent variable in the model for 
+##who's coefficient the bias would be introduced.
+
+##We already know that the correlation between the independent
+##variables is positive. So covariance is postive.
+#Thus the Sign of the bias depends on B2, the coefficient of 
+##the omitted variable when regression of price on 
+##area and dist combined. If B2 is postive then the bias 
+##will be positive, and if B2 is negative then the bias 
+##will be negative bias.
+
+##We already determined that there is a postive correlation 
+##between price and area in question 2 a part 1. 
+##Thus B2 is postive, resulting in a postitive bias. 
+
+##Hence by not including area in the regression of price on dist
+##we will observe a positive bias.
+```
+
+```{r}
+
+
+b <- lm(formula = price ~dist, data = data_lm)
+
+summary(b)
+
+## Coefficient of dist variable is 5331
+## Standard error 1472
+
+##This shows that there is a positive correlation 
+##between the price and dist variables. This
+##means that price of the house is positively dependant 
+##on the distance of garbage incinerator from the house.
+##In other words, a unit increase in distance of incinerator from 
+##house will increase the price of house by 5331.
+
+```
+
+```{r}
+
+c <- lm(formula = price ~ dist + area, data = data_lm)
+
+summary(c)
+
+##Estimate of dist coefficient  = 3160 (before = 5331)
+##Estimate of area coefficient = 39197
+##Estimate of intercept = 1124
+##Standard deviation of dist coeff = 1154 (before = 1472)
+
+
+##We see that the estimate of dist coefficient
+##has reduced from the part b where dist is the
+##only variable in the model. Similarly with the standard 
+##deviation. This is due to the
+##introduction of new variable (area) into the model
+##where the two variables dist and area are 
+##correlated. Similarly the variance of residuals
+##also reduced due to this correlation. This is expected
+##as we saw positive correlation between the 
+##variables dist and area in question 1 part ii.
+
+##Thus it can be said there is economically/substantively
+##a meaningful difference between estimates in parts b and c
+
+```
+
+```{r}
+
+#Part d 
+
+x = lm(formula = dist~area, data = data_lm)
+
+resid_x = residuals(x)
+
+#summary(resid_x)
+
+y = lm(formula = price ~ area , data = data_lm)
+
+resid_y = residuals(y)
+
+#summary(resid_y)
+
+z = lm(formula = resid_y ~ resid_x , data = data_lm)
+
+summary(z)
+
+##Estimate of resid_x coefficient = 3160, sd = 1143
+##Estimate of dist coefficient found in part c i.e 3160, sd = 1145
+##Which means the partialling out of the variable 'area' during the 
+##regression of price on just dist is controlled
+##accurately
+
+```
+
+```{r}
+
+colnames(data_lm)
+
+
+##We see many other variables in the data. 
+##Few to notice here are as following
+## land - Total area of plot 
+## age - Age of the house
+## rooms - Number of rooms
+## baths - number of bathrooms
+
+##The above factors can affect the price of house
+
+
+
+
+```
+
+```{r}
+
+##Now lets see relation between above factors and dist
+
+
+dist_land = lm(formula = dist ~ land , data = data_lm)
+summary(dist_land)
+
+
+##We observe the estimate value is postive. sd is positive.
+##And p value indicates that the estimate cannot be zero
+##This means that land can be a control variable for dist
+##Interpreted like, as the unit of land increases/decreases
+##distance from garbage incinerator increases/decreases
+##by1.353e-05. 
+
+dist_age = lm(formula = dist ~ age , data = data_lm)
+summary(dist_age)
+##We observe the estimate value is negative sd is positive.
+##And p value indicates that the estimate cannot be zero
+##This means that age can be a control variable for dist
+##Interpreted like, as the age of the house increases/decreases
+##distance from garbage incinerator decreases/increases
+##by 0.017327. 
+
+dist_rooms = lm(formula = dist ~ rooms , data = data_lm)
+summary(dist_rooms)
+
+##We observe the estimate value is postive. sd is positive.
+##And p value indicates that the estimate cannot be zero
+##This means that rooms can be a control variable for dist
+##Interpreted like, as the number of rooms increases/decreases
+##distance from garbage incinerator increases/decreases
+##by 0.48918.
+
+dist_baths = lm(formula = dist ~ baths , data = data_lm)
+summary(dist_baths)
+##We observe the estimate value is postive. sd is positive.
+##And p value indicates that the estimate cannot be zero
+##This means that baths can be a control variable for dist
+##Interpreted like, as the number of baths increases/decreases
+##distance from garbage incinerator increases/decreases
+##by 0.7217
+
+
+```
