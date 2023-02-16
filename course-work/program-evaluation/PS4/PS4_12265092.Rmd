@@ -1,0 +1,824 @@
+---
+title: "PS4_12265092"
+author: '12265092'
+date: "18/05/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(knitr)
+
+library(dplyr)
+
+library(haven)
+
+library(tidyverse)
+
+library(stargazer) 
+
+library(broom)     
+
+library(kableExtra) 
+
+library("ivreg")
+
+library(car)
+
+library(AER)
+
+library(stargazer)
+
+library(lfe)
+
+library(plm)
+
+library(ggplot2)
+
+library(dplyr)
+
+library(fixest)
+
+```
+
+
+### Question 1
+### PROGRAMEVAL are interested in answering the following question:  What is the impact of  provincial air quality regulations on local particulate matter (PM 2.5)?  In order to get started,  they’d like you to present your ideal experiment. Explain what you would do to answer this  question in a completely unconstrained world, and describe the dataset that you’d like to have to  perform the analysis. Use math, words, and the potential outcomes framework to explain what  you would estimate and how you would do so. Make sure to be clear about the unit of analysis  (ie, what is “i” here?) 
+
+
+Ideal Experiment:
+
+For the same province i, we need to observe the following
+
+1) Local particulate matter (PM 2.5) in air if the Air Quality regulation was introduced
+2) Local particulate matter (PM 2.5) in air if the Air Quality regulation was not introduced
+
+Difference between 1 and 2 gives us the effect of "Air Quality regulations" on the local particulate matter (PM 2.5) in air in province i.
+
+
+Potential outcomes framework:
+Let $i$ be the individual province where $i \in \{1, 2, ... N\}$.
+Treatment indicator $D_{i}$ where $D_{i} \in \{0, 1\}$
+Treated: $D_i = 1$: Air Quality pollution regulations introduced       
+Untreated: $D_i = 0$: Air Quality pollution regulations not introduced   
+
+Outcome treated: $Y_i(D_i=1)$ : Total local particulate matter in air for province i, when Air Quality regulation was introduced - Treatment
+Outcome untreated: $Y_i(D_i=0)$: Total local particulate matter in air for province i, when Air Quality regulation was not introduced - Control
+
+
+We get the impact of treatment(i.e disconnecting household's electricity) $\tau_i$ from the difference between the above outcomes. 
+
+ - $\tau_i = Y_i(D_i=1) - Y_i(D_i=0)$
+
+
+The impact of treatment $\tau_i$ is the difference between the two outcomes, the difference between total local particulate matter in air for province i when Air Quality pollution regulations was introduced vs total local particulate matter in air for province i when Air Quality pollution regulations was not introduced where all other factors are kept constant.
+
+
+From above:
+ - $\tau_i = Y_i(D_i=1) - Y_i(D_i=0)$
+
+While we need both the outcomes at a given time to compute the impact of treatment, the problem is that at a given time, we cannot observe both the outcomes $ or $ we can only observe either $Y_i(D_i = 1) $ or $ Y_i(D_i = 0)$ at a given time.
+
+
+In case a province is treated (i.e Air quality regulation introduced), then the observed outcome would be  $Y_i(D_i = 1) $(Total local particulate matter in air for province i, when Air Quality regulation was introduced), and $ Y_i(D_i = 0)$ (Total local particulate matter in air for province i, when Air Quality regulation was not introduced) would become an unobserved outcome. Due to the un-observable outcome $or$ not being able to observe both the outcomes at a given time, measuring $\tau_i$ is impossible.
+    
+Average Treatment Effect $ tau^{ATE}$
+
+ - $ tau^ATE = E[Y_i(D_i = 1)] - E[Y_i(D_i = 0)]$
+
+ATE measures the average effect of treatment across a population of provinces. ATE measures the effect of Air Quality regulations on total local particulate matter. The problem is same in case of ATE. At the same time, for a province $i$, we cannot observe both outcomes. Hence it is impossible to measure ATE.
+
+
+How would a realistic experiment look like?
+
+An RCT where the treatment is assigned to provinces randomly. Then we can calculate the effect of treatment i.e Air Quality regulation on total local particulate matter. When the treatment assigned randomly and the distribution of the observables and the unobservables are same across the treated and untreated, we can take that there is no selection problem by design.
+
+Hence we get, $E[Y_i(1) | D_i=1] = E[Y_i(1)]$ and $E[Y_i(0) | D_i=0] = E[Y_i(0)]$    
+
+As a result,  $tau^{ATE} = E[Y_i(D_i=1)] - E[Y_i(D_i=0)]$
+
+Then the ATE will be equal to Naive estimator $\tau_N = \bar{Y}(D=1) - \bar{Y}(D=0)$
+
+For this to workout, we assume that the outcome is solely affected by the treatment and there is 100% compliance and there are no spillover effects among the treated or control groups.
+
+
+
+
+### Question 2
+### PROGRAMEVAL, being a commission and not a Chinese regulator, can’t impose pollution  regulations themselves. But they do have some data that they’d be willing to let you work with.  They have a single temporal snapshot of air quality across many municipalities. They’d like you  to look at average differences in air quality between municipalities with and without air quality regulations to get a sense of what these regulations do to air quality. You have a sense that this is  not a great idea. Describe three concrete examples of why this comparison might not provide the  answer that PROGRAMEVAL want.
+
+
+
+ATE measures the average effect of treatment across a population of provinces. ATE measures the effect of Air Quality regulations on total local particulate matter. The problem is same in case of ATE. At the same time, for a muncipality $i$, we cannot observe both outcomes. Hence it is impossible to measure ATE.
+
+$\tau^{ATE} = E[Y_i(D_i=1)] - E[Y_i(D_i=0)]$
+
+The problem is same in case of ATE. At the same time, for a muncipality $i$, we cannot observe both outcomes. Hence it is impossible to measure ATE.
+
+
+If we compare the average differences in total particulate matter of muncipalities with and without air quality regulations, we are determinng a Naive Estimator
+
+
+$\tau_N = \bar{Y}(D=1) - \bar{Y}(D=0)$
+
+Here we observe $Y_i(D_i=1)$ and $Y_j(D_j=0)$, where i is not equal to j. It would've benefitted us if we observed $Y_i(D_i=1)$ and $Y_i(D_i=0)$ for the same i. The difference between ATE and the Naive estimator is that the prior is based on the potential outcomes and the latter is based on observed outcomes. And moreover, while calculating Naive estimator, it can be so that the treated muncipalities and the untreated muncipalities can differ substantially.
+
+This brings us to the assumptions that the expectation of Y is same as (conditional expectation of Y that $D_i$ is 1 )and same as the (conditional expectation of Y given $D_i$ is 0). We are assuming that the average of Y given $D_i$ = 1 is a good counterfactual for when $D_i$ = 0. Below in mathematical expression form:
+
+$E[Y_i(1)] = E[Y_i(1) | D_i=1] = E[Y_i(1) | D_i=0]$    
+and    
+$E[Y_i(0)] = E[Y_i(0) | D_i=0] = E[Y_i(0) | D_i=1]$
+
+There can be a problem when i and j significantly differ from each other. Which is, the units that receive treatment differ a lot from the units that donot receive any treatment on observables and the unobservables.Thus this brings us to the assumption stated above. This can lead to various problems as stated below:
+
+
+1) Selection of Observables case
+Lets consider Air quality regulation was introduced i.e the treatment group in the muncipalities where stubble burning is high and Air quality regulation was not introduced i.e the control group in the muncipalities where stubble burning is low
+In a year of high stubble burning, the total particulate matter in air in the treatment muncipalities will be comparitively very high than that of the total particulate matter in air in the control group muncipalities. This is due to the effect of stubble burning in the treatment group muncipalities and no effect of the same in the control group muncipalities. This will result in a selection problem while determining the Naive estimator where the observable characteristic will result in an unestimation of the average effect of treatment
+
+$\tau_N$ given by $\tau_N = \bar{Y}(D = 1) - \bar{Y}(D = 0)$
+
+
+2) Selection of Unobservables case
+Lets consider that all the muncipalities have same levels of total particulate matter to start with. But the citizens of the muncipalities where the Air Quality regulations are introduced i.e the treatment group are passionate to rede their pollution levels than the citizens of the muncipalities where the Air QUality regulations are not introduced i.e the control group. In this case. the naive estimate as above will underestimate the average effect of treatment.
+
+$\tau_N$ given by $\tau_N = \bar{Y}(D = 1) - \bar{Y}(D = 0)$
+
+An overestimation case can also be constructed similarly to show that the Naive estimator would overestimate the average effect of the treatment.
+
+
+
+3) Case of Non compliance
+Lets consider that some of the muncipalities in the treatment have administrations that are running on low budget. In these cases, there may be a situation of non-compliance where, even thugh the muncipality comes under treatment group, the administration doesnt take initiative to implement the air quality regulations. In this case, the Naive estimator provides an inaccurate calculation of the average effect of the treatment. 
+
+$\tau_N$ given by $\tau_N = \bar{Y}(D = 1) - \bar{Y}(D = 0)$
+
+The same case can be constructed with the muncipalities in control group with proactive administrations running on high budget, implementing the Air quality regulations even though they are in the control group. This again leads to an inaccurate estimate of the average effect of the treatment.
+
+
+The above are a few reasons why the Naive Estimator($\tau_N$), suggested by PROGRAMEVAL may not be a good estimate of the Average Treatment Effect (ATE) $\tau^{ATE}$.
+
+
+4) Spill overs case
+Spill overs can happen when a change in one of the muncipalities can affect other muncipalities. Lets say that there are two muncipalities that are not very distant to each other. And one is in treatment group and one is in control group. As a result of air quality regulations in the treatment muncipality made the air purer or with reduced local particulate matter (PM 2.5) can improve the air quality in the muncipality from control group. This is because both are not very distant from each other. This can be re worded as that the effect of treatment in the treatment group muncipality has spilled over to the control group muncipality. In a case like this, the Naive estimator $\tau_N$ estimates innacurately the ATE of air quality regulations. 
+
+$\tau_N = \bar{Y}(D = 1) - \bar{Y}(D = 0)$
+
+
+
+Thus, the "Naive Estimator" $\tau_N$, as suggested by PROGRAMEVAL may not be a good estimate of the Average Treatment Effect (ATE) $\tau^{ATE}$  
+
+
+
+### Question 3
+### Explain to the PROGRAMEVAL what the benefit would be of being able to observe municipalities at multiple points in time. Their database goes from 2001 to 2019, but they only want to share what’s absolutely necessary, for confidentiality reasons. First, describe, in words and math, what you would do with data on many municipalities, all of which imposed air quality regulations in 2004. Be sure to discuss the identifying assumption that would be required for this approach to recover the causal effect of air quality regulations on particulate matter. Provide three concrete examples of concerns with this approach.
+
+In RCTs, the treated and control group have the same distribution of observables and the unobservables. Hence we can assume that there is no selection problem by design. But undertaking an RCT may not be practical in nature and may not be feasible. Thus to solve this problem, we can take a muncipality i and compare it with itself across different times such as t, t-1.
+
+t-1 is before treatment, no air quality regulation i.e before 2004
+t is after treatment, air quality regulation i.e after 2004
+
+Consider a muncipality i. The outcome when treated is Y_t(D_t = 1) and when untreated is Y_t(D_t = 0). 
+
+Average Treatment Effect of Air Quality regulations:
+$\tau^{ATE} = E[Y_t (D_t = 1) -  Y_t (D_t = 0)]$
+
+Lets say t = 0 is period before 2004, i.e $D_{t=0} = 0$ and the period after 2004 t =1 when treatment is introduced $D_{t=1} = 1$, the ATE can be estimated using the difference estimator $\hat\tau^{TS}$, which is
+
+$\hat\tau^{TS} = Y_{t=1} - Y_{t=0}$
+
+This is how through the difference estimator we compare a muncipality i with itself over time. 
+
+THe regression model for the same would be:
+
+$Y_{it} = \tau. D_{it} + \beta. X_i$
+
+
+$Y_{it}$: Outcome i.e the local particulate matter (PM 2.5), for municipality i in period t    
+$\tau$: Estimate of $\tau_ATE$   
+$D_it$: Treatment status, for municipality i in period t         
+$\beta.X_i$: Covariate $X_i$ which has time-invariant observable characteristics, for muncipality i and its coefficient $\beta$ 
+
+
+Now we can estimate ATE using the difference estimator as follows:
+
+$\hat\tau^{TS} = Y_{t = 1} - Y_{t = 0}$
+gives
+$$\hat\tau^{TS} = \tau(D_{i, t = 1} - D_{i, t = 0}) + \beta (X_i - X_i)$$
+which transforms to 
+$\hat\tau^{TS} = Y_{t = 1} - Y_{t = 0} = \tau(1 - 0) + 0 = \tau$
+
+Through this way,by taking differences over time for effect,  we remove any time-invariant unobservable characteristics of a muncipality i and thus reach to an unbiased estimator of  $\tau^{ATE}$ i.e the difference estimator $\hat\tau^{TS}$
+
+Assumptions:
+
+We assume that there is no change in muncipality i over the time period in question that affects the local particulate matter in air other than the air quality regulation introduction i.e the treatment. In other words, the counterfactual that is any observable and unobservable time variant characteristics are equal to 0. Also we assume that there are no time variant unobservables for muncipality i which affect the local particulate matter in air.
+          
+
+
+$Y_{it} = \tau. D_{it} + \beta. X_i + \gamma.U_i + \delta. V_{it}$
+     
+$Y_{it}$: Outcome - Local particulate matter (PM 2.5), for municipality i in period t    
+$\tau$: Estimate of ATE $\tau_ATE$   
+$D_it$: Treatment status, for municipality i in period t         
+$\beta.X_i$: Covariate $X_i$ which has time-invariant observable characteristics, for muncipality i and its coefficient $\beta$ 
+$U_i$: Time invariant unobservable characteristics, for muncipality i - something that doesnt change over time
+$V_{it}$: Time variant observable and unobservable characteristics, for muncipality i - something that changes over time
+
+Now we take the difference over time
+
+$\hat\tau^{TS} = Y_{t = 1} - Y_{t = 0} = \tau + \delta(V_{i, t = 1} - V_{i, t = 0})$
+
+We need to have $\delta = 0$  or $(V_{i,t = 1} - V_{i,t = 0}) = 0$ for the $\hat\tau^{TS}$ to be equal to $\tau$
+
+Thus having time variant characteristics i.e something that changes over time will introduce bias in our estimation resulting for the $\hat\tau^{TS}$ to be a biased estimator of $\tau^{ATE}$
+
+
+Example of such occurances can be as follows:
+
+1) Consider a case like whats happening in India now, a terrible heat wave. Not many people would go out and thus the emission from vehicles and industries reduce due to the reduced use and reduced work casued by the heatwave. In such a case where a muncipality i in 2004 had faced a situation like heatwave throughout, this would produce a characteristic that is observable and at the same time not seen or is different prior to 2004. Thus there will be a bias in the estimation of $\hat\tau^{TS}$. Also the counter factual $(V_{i, t = 1} - V_{i, t = 0}) \not= 0$. Due to the bias introduced by such a situation, $\hat\tau^{TS}$ will be a biased estimator for the estimation of ATE of treatment i.e the average effect of air quality regulation on the local particulate matter (PM 2.5). 
+
+2) Consider a muncipality i with a profound industrial sector. And most of the pollution is due to the emissions from these industries. Now lets say that the administration of a particular group of industries decided to move to a green energy based industry in 2004. THis will result in reduced emissions that is observable for this muncipality i. In this case the entry of this green energy industry would affect the outcome and will create a bias is in the $\hat\tau^{TS}$. Due to this bias, $\hat\tau^{TS}$ can be a biased estimator of $\tau^{ATE}$ ATE of outcome, i.e average effect of air quality regulations on the local particulate matter. 
+
+
+3) Lets assume a muncipality i where the temperatures are very cold in general. And the cold has increased in 2004 due to the change in weather. We know that due to the density of air in cold temperatures , the local particulate matter increases in absolute values.  Thus for the muncipality i, the observable characteristic is different from prior to 2004 i.e before the colder temperatures. Then there will be a bias introduced in the $\hat\tau^{TS}$ and hence will be biased in estimating the ATE of outcome, i.e average effect of air quality regulations on the local particulate matter. Also the trend in the counter factual will be $(V_{i, t = 1} - V_{i, t = 0}) \not= 0$
+
+
+
+
+
+
+### Question4
+### Next, explain why it would be even better to have data on multiple municipalities, divided into  two groups: municipalities that never imposed air quality regulations, and municipalities that  imposed air quality regulations in 2004. Explain, in words and math, the estimator that you would use with this dataset. You should include an estimating equation in the form of a regression. Describe how this larger dataset would allow you to resolve the concerns you had above. Be sure to discuss the identifying assumption that would be required for this approach to recover the causal effect of air quality regulations on particulate matter. Provide two examples of remaining concerns, even in this larger dataset. 
+
+We have the equation from Question 3
+
+$\hat\tau^{TS} = Y_{t=1} - Y_{t=0} = \tau + \delta(V_{i, t=1} - V_{i, t=0})$
+
+We have seen that we need to have $\delta = 0$  or $(V_{i,t = 1} - V_{i,t = 0}) = 0$ for the $\hat\tau^{TS}$ to be equal to $\tau$. This says that we dont have idea of the outcome for a treated muncipality i in t = 1,  in case of no treatment. TO solve this , we can take approximate using the data from the group of muncipalities that never the said introduced air quality regulations. 
+
+This means we need data on the muncipalities that never introduced air quality regulations. Once we have the same, we can employ a difference in difference (DiD) estimator $\hat\tau^{DD}$, that helps to find differences across muncipalities, within time and within muncipality and across time comparisions from the data on muncipalities that never introduced air quality regulations.
+
+$\hat\tau^{DD}$ compares treated to untreated muncipalities over time.    
+
+The equation for the same is:
+
+$\hat\tau^{DD} = \hat\tau^{TS}_{D_i = 1} - \hat\tau^{TS}_{D_i = 0}$
+
+and 
+
+$Y_{it} = \tau.D_{it} + \beta.X_i + \delta.S_t$ - treatment for muncipality i 
+$Y_{jt} = \beta.X_i + \delta.S_t$
+
+$Y_{it}$: Outcome - Local particulate matter , for municipality i in period t 
+$Y_{it}$: Outcome - Local particulate matter , for municipality j in period t 
+$\tau$: Estimate of ATE $\tau_ATE$   
+$D_it$: Treatment status, for municipality i in period t         
+$\beta.X_i$: Covariate $X_i$ which has time-invariant observable characteristics, for muncipality i and its coefficient $\beta$ 
+$S_t$: Time variant observable and unobservable characteristics and delta
+
+
+Thus the DiD estimator compares a (muncipality i with itself over time (t, t-1)) to a (muncipality j with itself over time (t, t-1).
+
+The equation for muncipality i gives,
+$Y_{i,t = 1} - Y_{i,t = 0} = \tau.(D_{i,t = 1} - D_{i,t = 0}) + \beta.(X_i - X_i) + \delta.(S_{t = 1} - S_{t = 0}) = \tau.(D_{i,t = 1} - D_{i,t = 0}) + \delta.(S_{t = 1} - S_{t = 0})$
+
+Similarly for muncipality j,, we have 
+$Y_{j,t = 1} - Y_{j,t = 0} = \beta.(X_i - X_i) + \delta.(S_{t = 1} - S_{t = 0}) = \delta.(S_{t = 1} - S_{t = 0})$
+
+
+We take difference of the above two equations to determine the DiD estimator:
+
+
+$\hat\tau^{DD} = Y_{i,t = 1} - Y_{i,t = 0} - Y_{j,t = 1} - Y_{j,t = 0} = \tau.(D_{i,t = 1} - D_{i,t = 0}) = \tau(1-0) = \tau$
+
+
+From the above, we can say that the DiD estimator is a good estimator of the ATE. 
+
+
+Assumptions:
+
+1) Parallel counterfactual trends:
+We assume that treatment is as good as randomly assigned ,as we assume that in absence of treatment time trend shoudl be same across muncipalities i and muncipalities j.
+
+This assumption will make the DiD a good estimator for ATE, otherwise as we saw in question 3, there would be bias in the estimation of ATE.
+
+Example:
+Lets say that muncipality i which introduced air quality regulations has also introduced anothe program where citizens start community approaches to reduce emmisions through switch to low emmission alternatives. Due to these community approach programs the outcome i.e the total particulate matter is reduced significantly for muncipality i. Thus the parallel trends assumption is not satisfield as the trend changed in 2004 due to introduction of another program.
+
+Similar example for muncipality j which did not introduce air quality regulation. But a new low emmision alternative started to be available in the market in 2004. The citizens who  are aware of the effects of high pollution started to switch to this new low emmission alternative available in the market such as affordable electric vehicles. Due to this change in trend, the outcome i.e total particulate matter in air for the muncipality j is significantly reduced. Thus the parallel trends assumption is not satisfied as the trend changed in 2004 due to new trend.
+
+
+In both of these above cases, we observed that there isn't same trend across the muncipalities i and muncipalities j in the absence of treatment. Thus we need the parallel counterfactual trends assumption to have DiD estimator $\tau^{DD}$ become an good unbiased estimator of ATE $\tau^{ATE}$.
+
+
+
+
+
+
+
+
+
+### Question 5
+### PROGRAMEVAL, given your even-handed discussion of various approaches, is willing to put  their faith in you. They will give you data on the universe of their consumers from 2003 to 2007. This includes municipalities that imposed air quality regulations across several different years. Describe, in words and math, how you would estimate the effect of air quality regulations on particulate matter using this dataset. You should include an estimating equation in the form of a regression.
+
+
+The simple panel data regression equation is 
+
+
+$Y_{it} = X_{it} \beta + \tau D_{it} + \epsilon_{it}$
+
+and $\epsilon_{it} = \alpha_i + \delta_t + v_{it}$
+
+$\alpha_i$ comprises the municipality variant time invariant characteristics effects and $\delta_t$ is the municipality invariant time variant effects  and $v_it$  is the muncipality and time variant characteristics effects
+
+Given that the data includes muncipalities that imposed air quality regulations across several different years. Hence the simple Fixed Effects Model which is a general case of DiD model can be used to estimate treatment effect.
+
+$Y_{it} = X_{it} \beta + \tau D_{it} + \sum_{i = 1}^{N} 1[unit = i]_i + \sum_{t = 2003}^{2007} 1[time = t]_t + v_{it}$
+
+
+$Y_it$: Outcome - the total particulate matter level, for municipality i in time t         
+$D_it$: Treatment status, for municipality i, time period t in year        
+$X_it$: Muncipality varying and time varying observables effects  
+$v_it$: Unobservable municipality specific time varyiant effects which, each muncipality i for each year t
+$\sum_{i=1}^{N} 1[unit = i]_i$: Dummy variables to determine the municipality specific time invariant fixed effects       
+$\sum_{t=1}^{T} 1[time = t]_t$: Dummy variables to determine the time variant fixed effects same across all the municipalities
+         
+
+Thus by introducing these effects from the Fixed effects model to the DiD model , we get the new regression equation as
+
+$Y_i = \alpha +\tau Treat*Post_{it} + \beta Treat_i + \delta Post_t + \beta X_{it} + \epsilon_{it}$
+
+Reduced to     
+
+$Y_i = \tau D_{it} + \alpha_i + \delta_t + \beta X_{it} + \epsilon_{it}$
+
+
+We can also add pre-treatment effects to the above model and perform an Event study design. The equation for the same will be as follows:
+
+$Y_{it} = \sum^{2007}_{s = 2003} \tau_sD_i . 1[periods\ to\ treatment = s]_{it} + \alpha_i + \delta_t + \beta.X_{it} + \epsilon_{it}$
+
+Here
+
+$Y_{it}$:  Outcome - the total particulate matter level, for municipality i in time t
+$\alpha_i$: Individual fixed effects         
+$\delta_t$:  Time fixed effects     
+$\epsilon_t$: Error term which comprises time variant and time invariant observables and unobservables.
+$\tau_sD_i . 1[periods\ to\ treatment = s]_{it}$: ATE estimate for municipality i with treatment status $D_it$, that imposed the regulation in time periods s
+$X_i$: Covariate that comprises the time invariant observable characteristics, for the municipality i     
+
+
+
+
+
+
+### Question 6
+### Use the included  ps4_data.csv  dataset to implement  a simple comparison of average particulate matter between municipalities with and without air quality regulations. Describe what you find. Use regression to perform a time-series analysis of the effect of air quality regulations on particulate matter, using only municipalities who introduced regulations in 2004. Describe what you find. How does this differ from what you estimated using the initial estimator. Plot particulate matter against time for municipalities that imposed air quality restrictions in 2004. What do you see? (It may also be helpful to plot  average  consumption  across municipalities). Does this figure affect how you interpret your estimates?
+
+
+```{r}
+data <- read_csv('ps_4_data.csv')
+
+#We have year and particulate matter numeric values, lets mutate type to numeric
+data <- data %>% 
+          mutate(year = as.numeric(year)) %>% 
+          mutate(particulate_matter = as.numeric(particulate_matter))
+```
+
+```{r}
+summary(data)
+
+#We have na's in the data, replace them with 0
+data[is.na(data)] = 0
+summary(data)
+```
+
+
+
+```{r}
+data <- 
+  data %>% 
+  mutate(ever_regulated = ifelse(air_quality_regulation_year != 0, 1, 0))
+
+data %>%
+  group_by(ever_regulated) %>%
+  summarise_at(vars(particulate_matter), list(name = mean))
+
+reg1 <- lm(particulate_matter ~ ever_regulated, data = data)
+summary(reg1) 
+```
+From the comparision of average particulate matter between muncipalities with and without air quality regulation     
+Average particulate matter in municipalities with air quality regulations  is 41.83 and the Average particulate matter in municipalities without air quality regulations is 66.28. The difference in average being -24.44.
+
+
+#### Regression to perform time series analysis of effect of treatment using only the muncipalities that introduced regulations in 2004.
+
+```{r}
+data_2004 <- 
+  data %>% 
+  filter(air_quality_regulation_year==2004) 
+
+data_2004 <-
+  data_2004 %>% 
+  mutate(is_regulated2004=ifelse(year<2004,0,1))
+
+summary(data_2004)
+
+reg2 <- lm(particulate_matter ~ is_regulated2004, data_2004)
+summary(reg2)
+```
+
+Average effect of air quality regulations on particulate matter using only municipalities who introduced regulations in 2004 = -21.470 
+Difference in averages of particulate matter in municipalities before introduction of air quality regulations in 2004 and after introduction of air quality regulations in 2004 = -21.470       
+
+From the analysis above, we observed that the difference in averages of particulate matter between municipalities with and without air quality regulations is  -24.4486  and from here we observe that the difference in averages of particulate matter before 2004 and after 2004 for municipalities who introduced the regulations in 2004 is -21.470         
+
+
+```{r}
+
+pm_mean_values <- 
+  data_2004 %>% 
+  group_by(year) %>% 
+  summarise(mean_val = mean(particulate_matter))
+
+
+plot1 <- ggplot(data_2004, aes(x=year, y=particulate_matter)) + geom_point() + 
+  scale_x_continuous(breaks=c(2003,2004,2005,2006,2007,2008,2009,2010,2011,2012)) +
+  ggtitle("Particulate matter values across municipalities that imposed regulations in 2004") 
+plot1
+ 
+
+mean_plot2 <- ggplot(pm_mean_values, aes(x=year, y=mean_val)) + geom_point() + geom_line()+ 
+  scale_x_continuous(breaks=c(2003,2004,2005,2006,2007,2008,2009,2010,2011,2012))+
+  ggtitle("Average particulate matter value across municipalities that imposed regulations in 2004")
+mean_plot2
+```
+
+
+We observe a downward trend in the total particulate matter from 2003 till 2005 across the muncipalities that had implemented the air quality regulations in 2004. The same is the case for the mean particulate matter values. However, we also see that there is a steep increase to the pre-2004 levels in 2006 for both the total particulate matter and mean particulate values. Post to that the mean particulate matter varies with no continuous trend. This couldve have resulted in the lower difference in averages of particulate matter for the muncipalities that introduced the regulations in 2004, before and after 2004.From the plots, we cannot say anything in respect to the time variant and invariant characteristics regarding the trend we see in the plots. 
+
+
+
+
+
+### Question 7 
+###  Plot (average) particulate matter against time for municipalities who never imposed air quality  regulations. Assess the viability of using these municipalities as a control group for the 2004  regulators. Plot (average) particulate matter against time for municipalities who passed air quality  regulation in 2006. Assess the viability of using the non-regulating municipalities as a control group for the 2006 regulators. 
+
+
+Plot (average) particulate matter against time for municipalities who never imposed air quality  regulations
+
+```{r}
+data_no_regulation <- 
+  data %>% 
+  filter(air_quality_regulation_year==0)
+
+pm_mean_values2 <- 
+  data_no_regulation %>% 
+  group_by(year) %>% 
+  summarise(mean_values = mean(particulate_matter))
+
+
+plot3 <- ggplot(data_no_regulation, aes(x=year, y=particulate_matter)) + geom_point() + 
+  scale_x_continuous(breaks=c(2003,2004,2005,2006,2007,2008,2009,2010,2011,2012)) +
+  ggtitle("Particulate matter values across the municipalities who never imposed regulations") 
+plot3
+
+
+
+mean_plot4 <- ggplot(pm_mean_values2, aes(x=year, y=mean_values)) +
+  geom_point() + 
+  geom_line()+ 
+  scale_x_continuous(breaks=c(2003,2004,2005,2006,2007,2008,2009,2010,2011,2012))+
+  ggtitle("Average particulate matter values across the municipalities who never imposed regulations")
+mean_plot4
+
+
+```
+
+The total and mean particulate matter for the muncipalities that had never imposed regulations  over the years 2003 to 2012 is similar to the muncipalities that imposed the regulations. We observe a parallel trend between them.
+Thus, assuming parallel trend is satisfied, we can analyse by keeping these muncipalities group as control group to determine the Did estimator $\hat\tau^{DD}$ for the 2004 regulators.
+
+
+
+2006 Plot:
+
+```{r}
+data_2006 <- 
+  data %>% 
+  filter(air_quality_regulation_year==2006)
+
+pm_mean_values3 <- 
+  data_2006 %>% 
+  group_by(year) %>% 
+  summarise(mean_values = mean(particulate_matter))
+
+
+plot5 <- ggplot(data_2006, aes(x=year, y=particulate_matter)) + geom_point() + 
+  scale_x_continuous(breaks=c(2003,2004,2005,2006,2007,2008,2009,2010,2011,2012)) +
+  ggtitle("Particulate matter values across the municipalities that imposed regulations in 2006") 
+
+plot5
+
+
+mean_plot6 <- ggplot(pm_mean_values3, aes(x=year, y=mean_values)) + geom_point() + geom_line()+ 
+  scale_x_continuous(breaks=c(2003,2004,2005,2006,2007,2008,2009,2010,2011,2012))+
+  ggtitle("Average particulate matter values across the municipalities that imposed regulations in 2006")
+
+mean_plot6
+```
+
+We see a different trend from above. The total particulate matter values and the mean particulate values for the muncipalities that had never imposed regulations throughout the years 2003 to 2012 has a increasing trend and is different to what we observed with the muncipalities that imposed regulations in 2006. Hence there is no parallel trend observed. As we see that the parallel trend assumption is not satisfied, we cannot use these muncipalities group to determine the DiD estimator for the ATE for 2006 regulators.
+
+
+
+
+### Question 8
+### Using just the non-regulators and the 2006 regulators, estimate the causal impact of imposing air  quality regulation on particulate matter. To do this, begin with a simple difference in means (rather than regression). Next, use a simple regression (no fixed effects). Finally, use fixed effects to control for common time shocks and time-invariant municipality characteristics (you can do this either via dummy variables or de-meaning). Report what you find. Be sure to adjust your  standard errors appropriately in the regression-based estimates. Describe how this compares to what you estimated in (6) and (7).
+
+
+```{r}
+
+data_no_regulation_2006 <- 
+  data %>% 
+  filter(air_quality_regulation_year==0 | air_quality_regulation_year==2006) 
+
+
+data_no_regulation_2006 <-
+  data_no_regulation_2006 %>% 
+  mutate(is_treated = ifelse((year>= 2006), 1, 0))
+
+pm_mean_values4 <- 
+  data_no_regulation_2006 %>% 
+  group_by(air_quality_regulation_year,is_treated) %>% 
+  summarize(mean = mean(particulate_matter))
+
+pm_mean_values4
+```
+
+Difference in Means:
+
+$Differencein means = \bar Y_{i = treat,t = post} - Y_{i = treat,t = pre} - Y_{j = control,t = post} - Y_{j=control,t = pre}$
+
+Calculation Difference in means
+$Difference in means = (228.827 - 101.265) - (84.309 - 24.216) = 67.46895$
+
+
+Regression without fixed effects:
+
+
+```{r}
+
+
+data_no_regulation_2006_2 <- 
+  data %>% 
+  filter(air_quality_regulation_year==0 | air_quality_regulation_year==2006) 
+
+# Defining treatment and control groups using dummy variable 'is_after_2006'
+data_no_regulation_2006_2 <-
+  data_no_regulation_2006_2 %>% 
+  mutate(is_treated = ifelse((year>= 2006), 1, 0))
+
+# Defining Individual fixed affects
+data_no_regulation_2006_2 <-
+  data_no_regulation_2006_2 %>% 
+  mutate(is_regulated_2006 = ifelse((air_quality_regulation_year == 2006), 1, 0))
+
+reg_4 <- lm(particulate_matter ~ is_regulated_2006 + is_treated + is_regulated_2006 * is_treated,
+                 data = data_no_regulation_2006_2)
+summary(reg_4)
+
+```
+
+ 
+The difference of means from using DiD an estimator to determine effect for regression is 67.4689   
+
+Using Fixed Effects:
+
+
+
+```{r}
+
+#Using felm
+data_no_regulation_2006_2$municipality_id <- as.factor(data_no_regulation_2006_2$municipality_id)
+
+reg6 <- felm(particulate_matter ~ is_regulated_2006 + is_treated 
+             + is_regulated_2006 * is_treated | municipality_id + year|0|0, cluster ="municipality_id", 
+             data = data_no_regulation_2006_2)
+
+
+summary(reg6)
+```
+
+
+
+```{r}
+
+#plm
+
+reg7 <- plm(particulate_matter ~ is_regulated_2006 + is_treated + 
+                    is_regulated_2006 * is_treated, data = data_no_regulation_2006_2,
+                    index = c("municipality_id","year"), 
+                    model = "within")
+
+summary(reg7)
+   
+
+data_demean_fixed <- with(data_no_regulation_2006_2,
+            data.frame(particulate_matter = particulate_matter - 
+                         ave(particulate_matter, municipality_id), is_treated, is_regulated_2006))
+
+reg8 <- lm(particulate_matter ~ is_treated + is_regulated_2006 + 
+             is_treated * is_regulated_2006, data = data_demean_fixed)
+
+summary(reg8)
+
+#Coefficient Test
+coeftest(reg8)
+```
+
+
+Observations from Question 6
+Average effect of air quality regulations on particulate matter using only municipalities who introduced regulations in 2004 = -21.470 
+Difference in averages of particulate matter in municipalities before introduction of air quality regulations in 2004 and after introduction of air quality regulations in 2004 = -21.470  
+
+We observed a downward trend in the total particulate matter from 2003 till 2005 across the muncipalities that had implemented the air quality regulations in 2004. The same is the case for the mean particulate matter values. However, we also see that there is a steep increase to the pre-2004 levels in 2006 for both the total particulate matter and mean particulate values. Post to that the mean particulate matter varies with no continuous trend. This couldve have resulted in the lower difference in averages of particulate matter for the muncipalities that introduced the regulations in 2004, before and after 2004.From the plots, we cannot say anything in respect to the time variant and invariant characteristics regarding the trend we see in the plots. 
+
+
+
+
+Observations from Question 7
+The total and mean particulate matter for the muncipalities that had never imposed regulations  over the years 2003 to 2012 is similar to the muncipalities that imposed the regulations. We observe a parallel trend between them.
+Thus, assuming parallel trend is satisfied, we can analyse by keeping these muncipalities group as control group to determine the Did estimator $\hat\tau^{DD}$ for the 2004 regulators.
+
+The total particulate matter values and the mean particulate values for the muncipalities that had never imposed regulations throughout the years 2003 to 2012 has a increasing trend and is different to what we observed with the muncipalities that imposed regulations in 2006. Hence there is no parallel trend observed. As we see that the parallel trend assumption is not satisfied, we cannot use these muncipalities group to determine the DiD estimator for the ATE for 2006 regulators.
+
+Observations from Question 8
+
+We saw the estimated $\tau^{DiD}$ is 67.46 in the simple regression without fixed effects. This means that the effect of introducing air quality regulation has effected the local particulate matter to increase by 67.468. We also saw the same results when we applied fixed effects to control time invariant muncipality characteristics and the time changes. We saw an estimated $\tau^{DiD}$ values of 67.468. This means introducing air quality regulation resulted in an average increase of local particulate matter by 67.468.
+
+
+
+As we saw above observations, the parallel trends assumption is not satisfied for the muncipalities gorup that never introduced regulations. Also the muncipalities group that has never introduced regulations cannot be used as a control group for the 2006 regulators when using the DiD estimator $\hat\tau^{DD}$ for estimating the ATE $\tau^{ATE}$. This also holds true from what we saw here.
+
+
+We also saw in the FELM model, regression with fixed effects, there was the lowest clustered standard error for $\tau^{DD}$ with a value of 0.54. THe same in the plm model is 2.34 and in the demeaning method is 2.22
+
+
+
+
+
+### Question 9
+### Plot average particulate matter over time, separately (but on the same graph) for municipalities that imposed air quality regulations in each of the years from 2003 to 2007. Drop the municipalities that regulated air quality in the year that looks different from the rest of the years, and explain why you can’t estimate a credible causal effect for these municipalities. Using the remaining municipalities to estimate a panel fixed effects regression to identify the causal effect of air quality regulation on particulate matter. Describe what you find. How does this compare to what you estimated in (9)? Use an event study regression to estimate how this treatment effect varies over time. Note that you will have to omit one of the event study treatment dummies (otherwise everything will be collinear). Standard practice is to leave out the T-1 dummy. Plot the  resulting event study point estimates and 95 percent confidence intervals. Describe how the treatment effect varies overtime, if at all. 
+
+
+
+```{r}
+data$'air_quality_regulation_year' <- as.character(data$'air_quality_regulation_year')
+plot6 <- data %>% 
+  filter(air_quality_regulation_year >= 2003 & air_quality_regulation_year <= 2007) %>% 
+  ggplot(aes(x= year, y = particulate_matter, color = air_quality_regulation_year)) + geom_line() + 
+  scale_x_continuous(breaks=c(2003,2004,2005,2006,2007,2008,2009,2010,2011,2012))+
+  ggtitle("Average particulate matter values across the municipalities that imposed regulations between years 2003-2007")
+
+plot6
+```
+Observations from Question 7
+
+
+The total particulate matter values and the mean particulate values for the muncipalities that had never imposed regulations throughout the years 2003 to 2012 has a increasing trend and is different to what we observed with the muncipalities that imposed regulations in 2006. Hence there is no parallel trend observed. As we see that the parallel trend assumption is not satisfied, we cannot use these muncipalities group to determine the DiD estimator for the ATE for 2006 regulators.
+
+We saw the above observationf rom question 7 to be holding true from Question 8, the parallel trends assumption doesnt seem to hold and we cannot use the muncipalities group that never imposed regulations as a control for the 2006 regulators. Also the regressions with Fixed effects and without the fixed effects resulted in the estimated $\tau^{DiD}$ vaues of 67.4689. Thus without the parallel trend observed, we cannot estimate the credible causal effect for these muncipalities that were regulated in 2006 using the DiD estimator. 
+
+
+
+
+Lets go ahead with analysis, filter for the wanted muncipalities
+
+```{r}
+data_drop_2006 <- 
+  data %>% filter(air_quality_regulation_year %in% c(0,2003, 2004, 2005, 2007))
+
+
+
+```
+
+
+```{r}
+#data_drop_2006 <- pdata.frame(data_drop_2006, index=c("municipality_id"))
+
+#data_drop_2006$is_treated <- 
+#  ifelse(data_drop_2006$year < data_drop_2006$air_quality_regulation_year,0,1)
+
+#plm on remaining
+
+#reg8 <- plm(particulate_matter ~ air_quality_regulation_year + is_treated + air_quality_regulation_year * is_treated, 
+#                      data = data_drop_2006,
+#                      index = c("municipality_id","year"), 
+#                      model = "within")
+
+#summary(reg8)
+
+
+
+#The DiD estimator to determine the ATE of the air quality regulations is 9.2592. This means that there is no significant #effect on introducing the air quality regulations on the outcome local particulate matter. However, it seems to have #increased for the muncipalities that introduced the air quality regulations.
+
+#However in Question 8 we say, that the parallel trends assumption was not satisfying and thus we cannot use the group of #muncipalities that never introduced the air quality regulations as a control group for the 2006 regulators when using the #DiD estimator to estimate the value of ATE. It resulted in the values of DiD estimator $\tau^{DiD}$ of 67.2689. The #$\tau^{DiD}$ results are the same when the regression was run with fixed effects and without fixed effects.
+
+#As we see that the parallel trend is observed for the muncipalities that never introduced the air quality regulation and the #muncipalities that intriduced in 2003, 2004, 2005, 2007, we can use the muncipalities group that have never introduced the #air quality regulations as the control group for the other set and use in the DiD estimator $\hat\tau^{DD}$ to estimate the #ATE to determine the causal effect of treatment i.e air quality regulation on the particulate matter. 
+
+```
+
+
+```{r}
+
+
+data_drop_2006$air_quality_regulation_year <- as.numeric(data_drop_2006$air_quality_regulation_year)
+data_drop_2006$year <- as.numeric(data_drop_2006$year)
+
+data_drop_2006$is_treated <- ifelse((data_drop_2006$year < data_drop_2006$air_quality_regulation_year)|
+                                                 (data_drop_2006$air_quality_regulation_year==0),0,1)
+data_drop_2006$is_treated <- as.factor(data_drop_2006$is_treated)
+
+data_drop_2006$municipality_id <- as.factor(data_drop_2006$municipality_id)
+
+reg_10 <- felm(particulate_matter ~ is_treated |
+municipality_id + year|
+0|
+0,
+cluster ="municipality_id",
+data = data_drop_2006)
+
+#fe_ols1 = feols(particulate_matter ~ i(time_since_treatment, is_treated, ref = -1) 
+#		   |  municipality_id + year, cluster = ~municipality_id, data = data_drop_2006)
+
+#summary(fe_ols1)
+summary(reg_10)
+```
+Event study regresiion
+
+```{r}
+fe_ols2 = feols(particulate_matter ~ sunab(air_quality_regulation_year, year) 
+		   |   municipality_id + year, cluster = ~municipality_id,data = data_drop_2006)
+
+etable(fe_ols2)
+
+#summary(fe_ols2)
+```
+
+Plot event study point estimates and 95% interval
+
+
+
+
+```{r}
+iplot(fe_ols2, sep = 0.5, ref.line = -1, pt.join = TRUE, 
+      xlab = 'Time fr treatment',
+      main = 'Event study')
+```
+
+Describe the treatement effect varies over time
+
+From what we observed above in the plot and the results of fe_ols, the air quality regulations have resulted in reduction of the local particulate matter by -16.91 where the maximum decrease stands at -21.37. The decrease can be deemed significant as this is the general trend after introduction of the air quality regulation years after the introduction. The maximum reduction also happened at 7 years after the introduction of the regulation. This means that the air quality regulations are effective in reducing the local particulate matter.
+
+
+
+
+
+
+
+### Question 10
+###  PROGRAMEVAL would like a summary of your findings. Explain which of the results you’ve come up with is your preferred estimate, and why. Make sure to describe at least one remaining potential shortcoming with these results. Finally, interpret the magnitude of your estimated effects: do your results suggest that the PROGRAMEVAL should be strongly promoting air quality regulations?
+
+
+Summary
+
+1) In the muncipalities that introduced the air quality regulations in the years from 2003 - 2007 except for the year 2006, we observed to have a parallel trend in the counterfactual in the muncipalities that never introduced the air quality regulations. 
+2) The naive estimator that calculated the difference in means of local particulate matter in air between muncipalities with  air quality regulations and without air quality regulations is -24.44. The same difference in means of particulate matter for the muncipalities who introduced the air quality regulations prior to 2004 and after 2004 stands at -21.47.
+2) We also saw that the muncipalities group that never introduced the air quality regulations can be used as the control group for the other set of muncipalities for determining the DiD estimator to estimate the ATE. 
+3) The set of muncipalities that regulated in the year 2006, we found that they dont observe a parallel trend in the counterfcatual, hence the set of the muncipalities that never introduced the regulations cannot be used as a control group for the above set to determine the DiD estimator $\hat\tau^{DD}$ for the ATE. 
+4)In the regression analysis of panel data, with and without fixed effects, we saw that introduction of air quality regulations have reduced the local particulate matter in air by -16.91 across the muncipalites that introduced air quality regulations in 2003-2007 except for 2006, with a maximum reduction of local particulate matter in air by -21.37, that after 7 years of treatment i.e introduction of air quality regulations.Thus we concluded that the air quality regulations are beneficial to reduce the local particulate matter in air in the muncipalities.
+5) The simple regression without fixed effects resulted in the $\tau^{DiD}$ of 67.4689. This is same in the case of when we applied fixed effects into the regression. 
+
+
+
+
+Describe at least one remaining potential shortcoming with these results. 
+
+From the results in Q9, we can say that there is no selection in treatment problem by the observation of parallel trend in counterfactuals for the event design. But what if there are coincident treatments, where a completely different policy has been introduced in the treated group of muncipalites with the air quality regulation. In such a case, we cannot accurately estimate the ATE.
+
+Also we need to analyze the "Anticipatory effects and the Ashenfelter dip" in the plot of the event study and 95 percent confidence intervals. If we see 3 yuears and 2 years before the treatment, we see a reduction of 12.64 and 14.22 respectively. This mightve created a bias in our estimation of DiD estimator and further the ATE. This decrease however we dont know the cause, can be said due to the Ashenfelter dip i.e a sudden dip in trend just before the treatment i.e introduction of air quality reduction. 
+
+The above shortcomings with the results are remaining and we need to analyze the same before we determine the causal effect of the air quality regulation on the local particulate matter (PM 2.5) in air using the DiD estimator for the ATE.
+
+
+
+
+
+
+Interpret the magnitude of your estimated effects: do your results suggest that the PROGRAMEVAL should be strongly promoting air quality regulations? 
+
+We observed that the introduction of air quality regulations has reduced the local particulate matter (PM 2.5) in air for the muncipaliteis that introduced the air quality regulations in 2003-2007 except for 2006 by -16.91. Also we observe a reduction of local particulate matter not only immediately but also after nearly 7 years of the introduction of these regulations. Thus, in general after observing a reducing trend in the local particulate matter (PM 2.5) in the muncipalities that introduced the regulations, our results suggest  that the PROGRAMEVAL should be strongly promoting air quality regulations, assuming that theese shortcomings provided above are not significant in effecting  the results.   
+
+
+

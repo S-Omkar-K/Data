@@ -1,0 +1,500 @@
+---
+title: "PS1_PEval"
+author: '12265092'
+date: "11/04/2022"
+output: pdf_document
+---
+
+
+## R Markdown
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(haven)
+
+library(tidyverse)
+
+library(stargazer)
+
+library(broom)
+
+library(kableExtra)
+
+library(ggplot2)
+```
+
+
+
+### Question 1: KELLER would like to know about the payment impacts of their disconnections program. They say they’re interested in measuring the impact of their disconnections, but don’t exactly know what that means. Use the potential outcomes framework to describe the impact of treatment (defined as “disconnecting a household’s electricity”) for household i on electricity payments (measured in rupees) formally (in math) and in words.
+
+### Answer to Question 1
+
+Let i be household units $i \in  \{1, 2, ... N\}$ 
+
+Treatment Indicator $D_i$: 
+$D_{i} \in \{0, 1\}$    
+
+Treated: $D_i = 1$: disconnecting a household’s electricity       
+Untreated: $D_i = 0$: not disconnecting a household’s electricity   
+
+Outcome treated: $Y_i(D_i=1)$ : Electricity payments of household i in case household’s electricity is disconnected   
+Outcome untreated: $Y_i(D_i=0)$: Electricity payments of household i in case household’s electricity is not disconnected   
+
+We get the impact of treatment(i.e disconnecting household's electricity) $\tau_i$ from the difference between the above outcomes. 
+
+$\tau_i = Y_i(D_i=1) - Y_i(D_i=0)$
+
+
+### Question 2: KELLER are extremely impressed. They want to know how they can go about measuring $\tau_i$. Let them down gently, but explain to them why estimating $\tau_i$ is impossible
+
+The impact of treatment $\tau_i$ is the difference between the two outcomes i.e difference between the electricity payments if the household's electricity is disconected vs the electricity payments of the household's if electricity is not disconnected. 
+
+
+From above:
+$\tau_i = Y_i(D_i=1) - Y_i(D_i=0)$
+
+While we need both the outcomes at a given time to compute the impact of treatment, the problem is that at a given time, we cannot observe both the outcomes $ or $ we can only observe either $Y_i(D_i = 1) $ or $ Y_i(D_i = 0)$ at a given time.
+
+In case a household is treated (i.e disconnecting the electricity), then the observed outcome would be  $Y_i(D_i = 1) $(Electricity payments of household $i$ when household's electricity is disconnected), and $ Y_i(D_i = 0)$ (Electricity payments of household $i$ when household's electricity is not disconnected ) would become an unobserved outcome.
+
+
+Due to the un-observable outcome $or$ not being able to observe both the outcomes at a given time, measuring $\tau_i$ is impossible.
+
+
+
+### Question 3: KELLER are on board with the idea that they can’t estimate individual-specific treatment effects. They suggest estimating the average treatment effect instead. They are willing to give you some of their early data on payments. They have data on households who did and didn’t get disconnected, and want you to compare the average payments across the two sets of households. Describe what this is actually measuring, and provide an example of why this may differ from the average treatment effect.
+
+Average Treatment Effect $\tau^{ATE}$
+
+$\tau^{ATE} = E[Y_i(D_i = 1)] - E[Y_i(D_i = 0)]$
+
+ATE measures the average effect of treatment across a population of households.
+
+Calculating the average outcomes(Electricity payments) of both sets (the ones who got disconnected and the ones who did not get disconnected) and subtracting them, we are determining a Naive Estimator $\tau_N$
+ 
+
+$\tau_N = \bar{Y}(D=1) - \bar{Y}(D=0)$
+
+
+where $\bar{Y}(D = 1)$ is the average outcome (Electricity payments) for households with treatment status 1 i.e disconnecting the electricity and $\bar{Y}(D = 0)$ is the average (Electricity payments) for households with  treatement status 0 i.e not disconnecting the electricity. The Naive estimator $\tau_N$(a sample average) is calculated based on observed outcomes where as the ATE( Average of population E[]) is calculated on potential outcomes. 
+
+Here we are observing $Y_i(D_i = 1)$ and $Y_j(D_j = 0)$, knowing that i is not equal to j.
+
+This brings us to the assumptions that the expectation of Y is same as (conditional expectation of Y that $D_i$ is 1 )and same as the (conditional expectation of Y given $D_i$ is 0). We are assuming that the average of Y given $D_i$ = 1 is a good counterfactual for when $D_i$ = 0. Below in mathematical expression form:
+
+$E[Y_i(1)] = E[Y_i(1) | D_i=1] = E[Y_i(1) | D_i=0]$    
+and    
+$E[Y_i(0)] = E[Y_i(0) | D_i=0] = E[Y_i(0) | D_i=1]$
+
+There can be a problem when i and j significantly differ from each other. Which is, the households that receive treatment differ a lot from the households that donot receive any treatment. This leads to a bias called the Selection bias. This bias can be explained through the following example:
+
+Consider two types of households , one which are poor and other which are rich. Households that are treated i.e whose electricity got disconnected i.e treated are economically backward households and ones that are not treated are rich households. Consider a program running parallely, a financial benefit program for economically backward communities. This could potentially increase the electricity payments of the poor households who majorly conform to the treated group. If this happens, it would be impossible to isolate the effect on Electricity payments caused by the treatment from the total effect on Electricity Payments caused by both the treatment and the financial benefit program.
+
+Due to the above stated bias and assumptions, the Naive estimator $\tau^N$ suggested by Keller might not be a good estimator of the $\tau^{ATE}$ i.e the Average Treatment Effect. 
+
+
+### Question 4: KELLER have realized the error of their ways. Their CEO tells you, “Okay, we understand that our data won’t let us estimate the average treatment effect. But can’t we estimate the average treatment effect on the treated?” First formally (in math) define the ATT in this context, and then explain whether or not the KELLER data will allow you to estimate it. If so, describe how what you see in the data corresponds to the necessary components of the ATT. If not, explain why not, and describe what you can’t see in the data that you’d need to observe.
+
+### Answer to Question 4
+
+Average Treatment Effect on the Treated (ATT) :   
+
+$\tau^{ATT} = E[Y_i(1) | D_i = 1] - E[Y_i(0) | D_i = 1]$
+   
+$E[Y_i(1) | D_i=1]$ is the average effect of the treatment (disconnecting the electricity) for households in the treatment group (actually got disconnected), which can be observed in the data
+$E[Y_i(0) | D_i=1]$ is the average effect of the treatment (disconnecting the electricity) for households in the control group (who actually didnt get disconnected), which is a counterfactual that cannot be observed in the data
+
+Since we have unobservable in the calculation of $\tau^{ATT}$, it is not possible to calculate the Average treatment effect of the treated ($\tau^{ATT}$) from the KELLER data.
+
+
+### Question 5: KELLER forgot to tell you that they ran a randomized pilot study to estimate the effects of disconnections on payments. They’re happy to share those data with you: find it in ps1_data_22.csv. This experience has made you a little bit skeptical of KELLER’s skills, so start by checking (with a proper statistical test) that the treatment group and control group are balanced in pre-treatment payments, electricity usage, household size, and household head age. Use keller_trt as your treatment variable. Report your results. What do you find?
+
+### Answer for Question 5
+ 
+
+```{r}
+data <- read_csv('ps1_data_22.csv')
+
+
+reg1 <- data %>% 
+  select("baseline_hhsize", 
+         "baseline_payments", 
+         "baseline_elec_use", 
+         "baseline_hh_head_age") %>% 
+  lapply(function(x) lm(x ~ keller_trt, data = data))
+
+balance_test_summary1 <- reg1 %>%
+  sapply(function(x) coef(summary(x))[c(2,8)]) %>%
+  t()
+balance_test_summary1 %>%
+  kable(col.names = c("Difference in means", "P-value")) %>%
+  kable_styling(position = "center", font_size = 11, latex_options = "hold_position")
+
+```
+
+### checking (with a proper statistical test) that the treatment group and control group are balanced in pre-treatment payments, electricity usage, household size, and household head age
+
+P value for baseline_hhsize = 0.5048, Difference in Mean = -0.026
+P value for baseline_payments = 0.3173 Difference in Means = -3999.72 (~4000)
+P value for baseline_elec_use = 0.1634 Difference in Means = 11.02
+P value for baseline_hh_head_age = 0.529 Difference in means = -0.062
+
+Null Hypothesis H0: Difference in Means = 0
+
+From the P- values observed for the pre-payment variables baseline_hhsize(household size), baseline_payments(Payments), baseline_elec_use(household electricity usage), baseline_hh_head_age(household head age) using the keller_trt as the treatment variable, we cannot reject the null hypothesis. This says that the randomization is fine and the treatment group and the control group are balanced in pre-treatment payments, electricity usage, household size, and household head age. Thus they are not statistically significant.
+
+From the Difference in Means observed, we find an odd value for the variable baseline_payments(Payments).
+
+```{r}
+summary(data)
+```
+
+baseline_payments
+Min. : 0
+1st Qu.: 66
+Median : 130
+Mean : 2130
+3rd Qu.: 194
+Max. :20000000
+
+This can be due to the Max value present in the baseline_payments 20000000 which is odd despite the median of 130 and mean of 2130. 
+
+
+### Question 6: Plot a histogram of pre-treatment payments for treated farms and control households. What do you see? Re-do your balance table to reflect any necessary adjustments. What does this table tell you about whether or not KELLER’s randomization worked? What assumption do we need to make on unobserved characteristics in order to be able to estimate the causal effect of keller_trt?
+
+```{r}
+hist(data$baseline_payments)    
+
+```
+
+Lets filter the max values observed in the baseline_payments and then redo the test
+
+```{r}
+data %>% filter(baseline_payments == 20000000)
+```
+
+We see that there is only one row with baseline_payments value of 20000000. This is an outlier. Now lets remove this outlier and plot a histogram.
+
+
+```{r}
+
+data <- data %>% filter(baseline_payments != 20000000)
+hist(data$baseline_payments)
+
+```
+
+Our finding that only one outlier is correct. We now observe a reasonable with varied frequency across payments ranging 0 to 250 in the histogram. 
+
+Doing balance test again:
+
+```{r}
+reg2 <- data %>% 
+  select("baseline_hhsize", 
+         "baseline_payments", 
+         "baseline_elec_use", 
+         "baseline_hh_head_age") %>% 
+  lapply(function(x) lm(x ~ keller_trt, data = data))
+
+balance_test_summary2 <- reg2 %>%
+  sapply(function(x) coef(summary(x))[c(2,8)]) %>%
+  t()
+
+balance_test_summary2 %>%
+  kable(col.names = c("Difference in means", "P-value")) %>%
+  kable_styling(position = "center", font_size = 11, latex_options = "hold_position")
+
+
+summary(data)
+#summary(reg2)
+```
+
+Null Hypothesis H0: Difference in Means = 0
+
+From the P- values observed for the pre-payment variables baseline_hhsize(household size), baseline_payments(Payments), baseline_elec_use(household electricity usage), baseline_hh_head_age(household head age) using the keller_trt as the treatment variable, we cannot reject the null hypothesis. This says that the randomization is fine and the treatment group and the control group are balanced in pre-treatment payments, electricity usage, household size, and household head age. 
+
+
+#### Assumption we need to make on unobserved characteristics in order to be able to estimate the causal effect of keller_trt?
+
+
+From the balance tests above, we found that the treatment is assigned randomly and randomization is fine. The distribution of observables and unobservables are same in both the treated and the non-treated groups. Hence with this, we can assume that there is no risk of selection bias in this randomization.
+
+Which means $D_i$ is exogenous, i.e the unobservable, conditioned on treatment is zero.
+
+
+$E[Y_i(1) | D_i = 1] = E[Y_i(1)]$ 
+$E[Y_i(0) | D_i = 0] = E[Y_i(0)]$  
+
+
+Substituting these into the expression for $\tau^{ATE}$, we get
+
+$\tau^{ATE} = E[Y_i(D_i = 1)] - E[Y_i(D_i = 0)]$ 
+
+
+Initially we had a question of whether the i and j are significantly different. Here we confirmed the opposite with balance test and made sure that they are not significantly different from each other in terms of characteristics. Hence we can estimate ATE simply by taking difference in means of treatment group and control group.
+
+The estimate for the same can be found by calculating the difference between mean of the treatment group and the mean of control group, as shown below:
+
+$\hat{\tau}^{ATE} = \bar{Y}(D_i=1) - \bar{Y}(D_i=0)$
+
+### Question 7: Assuming that keller_trt is indeed randomly assigned, describe how to use it to estimate the average treatment effect, and then do so. Please describe your estimate: what is the interpretation of your coefficient (be clear about your units)? Is your result statistically significant? Is the effect you find large or small, relative to the mean in the control group?
+
+
+From the balance tests above, we found that the treatment is assigned randomly and randomization is fine. The distribution of observables and unobservables are same in both the treated and the non-treated groups. Hence with this, we can assume that there is no risk of selection bias in this randomization.
+
+Which means $D_i$ is exogenous, i.e the unobservable, conditioned on treatment is zero.
+
+
+$E[Y_i(1) | D_i = 1] = E[Y_i(1)]$ 
+$E[Y_i(0) | D_i = 0] = E[Y_i(0)]$  
+
+
+Substituting these into the expression for $\tau^{ATE}$, we get
+
+$\tau^{ATE} = E[Y_i(D_i = 1)] - E[Y_i(D_i = 0)]$ 
+
+
+Initially we had a question of whether the i and j are significantly different. Here we confirmed the opposite with balance test and made sure that they are not significantly different from each other in terms of characteristics. Hence we can estimate ATE simply by taking difference in means of treatment group and control group.
+
+The estimate for the same can be found by calculating the difference between mean of the treatment group and the mean of control group, as shown below:
+
+$\hat{\tau}^{ATE} = \bar{Y}(D_i=1) - \bar{Y}(D_i=0)$
+
+The same can also be found using the following regression (Yi on Di)
+
+```{r endline_payments_rg_table, message = FALSE, results = 'asis'}
+endline_payments_rg <- lm(endline_payments ~ keller_trt, data = data)
+
+
+stargazer(endline_payments_rg,
+          type = "latex",
+          header = FALSE,
+          title = "Regression: Treatment Effect",
+          column.labels = c("$Regression keller_trt, endline_payments$"),
+          colnames = FALSE,
+          model.numbers = FALSE,
+          df = FALSE)
+
+
+summary(endline_payments_rg)
+
+```
+
+
+$\tau^{ATE} = E[Y_i(D_i = 1)] - E[Y_i(D_i = 0)]$      
+$\hat{\tau}^{ATE} = \bar{Y}(D_i = 1) - \bar{Y}(D_i = 0)$ $= -\ Rs. \ 4,679.066$    
+This means that the estimated average treatment effect is negative, i.e is a decrease in payments by 4,769.066 Rs. post treatment.
+
+
+
+#### Statistical significance of results: Is your result statistically significant? Is the effect you find large or small, relative to the mean in the control group?
+
+```{r}
+control_data <- data %>% filter(keller_trt == 0) 
+summary(control_data$endline_payments)
+
+summary(endline_payments_rg)
+
+```
+We see a mean of endline payments for control group to be 48673. The mean and the median(34450) for endline payments for control group, and from the the p-value 2.071e^-06 , t value of -4.749, we can conclude that the estimated ATE is statistically significant.
+
+
+### Question 8: KELLER is convinced that the reason their disconnections are effective is because they are getting households to use less electricity. They want you to estimate the effects of the disconnections, but controlling for the endline amount of power consumed. Is this a good idea? Why or why not? Run this regression and describe your estimates. How do they differ from your results in (7)? What about controlling for baseline electricity consumption? Run this regression and describe your estimates. How do they differ from your results in (7)? How do the two estimates differ? What is driving any differences between them?
+
+It is not a good idea to control for the endline amount of power consumed. As this is a post treatment variable which is endogenous, once conditioned on it will result in affecting our assumption that by random assignment households with disconnection and without disconnections would have similar endline payments.Thus this will result on an estimation bias. 
+
+
+#### Conditioning on endline power use
+```{r}
+endline_power_reg <- lm(endline_payments ~ keller_trt + endline_elec_use, data = data)
+
+summary(endline_power_reg)
+summary(endline_payments_rg)
+
+stargazer(endline_payments_rg, endline_power_reg,
+          type = "latex",
+          header = FALSE,
+          title = "Regression: Treatment Effect",
+          column.labels = c("$Regression keller_trt, endline_elec_use, endline_payments$"),
+          colnames = FALSE,
+          model.numbers = FALSE,
+          df = FALSE)
+```
+
+Conditioning on the post-treatment variable endline power usage gives us
+$\hat{\tau}^{ATE} = \bar{Y}(D_i = 1) - \bar{Y}(D_i = 0)$ $= \ Rs. \ 1.147$ 
+
+P-value observed when conditioning with the post-treatment variable is 0.441. From the p value (>0.05) we can say that the difference in means between treatment group and control group is zero. And not statistically significant. Thus we can say that the estimated ATE on payments due to treatment when conditioned on the post-treatment variable endline power usage is zero.This means that the estimated average treatment effect on payments due to the treatment (disconnection) is zero
+
+
+From Q7 with no conditioning we saw the value of $\hat{\tau}^{ATE}$ = -Rs. 4,679.066
+This means that the estimated average treatment effect is negative, i.e is a decrease in payments by Rs. 4,769.066 post treatment.
+
+
+#### Controlling on baseline power consumed
+
+The variable baseline power consumed does not create a significant difference in any observable feature between treatment and control groups as they are already balanced around this covariate. In simple words, the variable baseline power consumed in a balanced covariate. A balanced covariate can be used to reduce the standard errors. 
+
+
+```{r baseline_power_reg_table, results='asis', message=FALSE}
+baseline_power_reg <- lm(endline_payments ~ keller_trt + baseline_elec_use, data = data)
+
+
+summary(endline_payments_rg)
+summary(endline_power_reg)
+summary(baseline_power_reg)
+
+
+stargazer(endline_payments_rg, baseline_power_reg, endline_power_reg,
+          type = "latex",
+          header = FALSE,
+          title = "Regression : Treatment Effect",
+          column.labels = c("$Regression keller_trt, baseline_elec_use, endline_payments$"),
+          colnames = FALSE,
+          model.numbers = FALSE,
+          df = FALSE)
+```
+
+
+
+When conditioning on pre-treatment variable baseline amount of power consumed
+$\hat{\tau}^{ATE} = \bar{Y}(D_i=1) - \bar{Y}(D_i=0)$ $= -\ Rs. \ 6,043$   
+This means that the estimated ATE is a decrease in the post-treatment payments by $6,043 with a standard error of Rs. 60.58 
+
+
+From Question 7, no conditioning 
+$\hat{\tau}^{ATE}= \bar{Y}(D_i=1) - \bar{Y}(D_i=0)$  $= -\ Rs. \ 4,679.066$   
+This means that the estimated ATE is a decrease in post treatment payments by $4,769.066 with a standard error of Rs. 985.2
+
+
+Standard error when no conditioning is Rs. 985.2
+Standard error when conditioning on pre-treatment variable baseline amount of power consumed is Rs. 60.58
+
+Thus, including the pre-treatment balanced covariate baseline amount of power consumed has reduced the standard error.
+
+
+
+### Question 9: One of the KELLER RAs (the real workforce!) informs you that not everybody who was supposed to be disconnected -- (keller_trt = 1) actually got disconnected. She tells you that the actual treatment indicator is keller_trt_yes. (Since disconnections are expensive, KELLER assures you that nobody in the control group got disconnected). In light of this new information, what did you actually estimate in question (7)? How does this differ from what you thought you were estimating?
+
+
+Under the new information i.e actual treatment indicator is keller_trt_yes and not keller_trt, this means that the there is non comliance in the assigned treatment group. This means that the ATE calculated is of treatment assignment but not of actually treated and thus called as the "Intent to Treat" estimate. 
+
+
+In question 7, we thought we are estimating ATE   
+$\tau^{ATE} = E[Y_i(D_i = 1)] - E[Y_i(D_i = 0)]$ 
+$\hat{\tau}^{ATE} = \bar{Y}(D_i = 1) - \bar{Y}(D_i = 0)$   
+$D_i = 1$ signifies treatment i.e disconnecting  household’s electricity   
+$D_i = 0$ signifies no-treatment i.e not disconnecting household’s electricity
+
+But we are actually estimating 
+$\tau^{experiment} = E[Y_i(R_i = 1)] - E[Y_i(R_i = 0)]$   
+$\hat{\tau}^{experiment} = \bar{Y}(R_i = 1) - \bar{Y}(R_i = 0)$   
+$R_i = 1$ signifies a household is assigned treatment i.e., selected for disconnecting household's electricity       
+$R_i = 0$ signifies a household not assigned treatment i.e not selected for disconnecting electricity  
+
+
+
+For both the above estimates to be same as we thought earlier, all households should comply to the assignment. I.e households selected for treatment undergoes treatment and households selected for non-treatment doesnt undergo treatment. Incase of non compliance both the above estimates will not be same and the calculated estimate in Question 7 would then become Intent to Treat estimate. 
+
+
+With the new information, we can say that 
+$R_i $ is assignment/selected for treatment indicator, which we get from keller_trt and $D_i$ is the actually treated indicator which we get from keller_trt_yes
+
+
+
+### Question 10: KELLER aren’t actually interested in the effect of assignment to treatment - they want to know about the actual effects of their disconnections. Describe (in math, and then in words) what you can estimate using the two treatment variables we observe, keller_trt and keller_trt_yes. Estimate this object (you can ignore standard errors just for this once). Interpret your findings. How does this compare to what you estimated in (7)? 
+
+
+
+Using keller_trt, we can estimate the average treatment effect on assigned to treatment units and using keller_trt_yes, we can find the average effect on actually treated. We thought we are estimating $\hat{\tau}^{ATE}$ in Question 7 but we are actually calculating $\hat{\tau}^{experiment}$   
+This is called the intent to treat (ITT) estimate  
+
+Using keller_trt
+$\tau^{ATE} = E[Y_i(D_i = 1)] - E[Y_i(D_i = 0)]$ 
+$\hat{\tau}^{ATE} = \bar{Y}(D_i = 1) - \bar{Y}(D_i = 0)$   
+$D_i = 1$ signifies treatment i.e disconnecting  household’s electricity   
+$D_i = 0$ signifies no-treatment i.e not disconnecting household’s electricity
+
+
+Using keller_trt_yes
+$\tau^{experiment} = E[Y_i(R_i = 1)] - E[Y_i(R_i = 0)]$   
+$\hat{\tau}^{experiment} = \bar{Y}(R_i = 1) - \bar{Y}(R_i = 0)$   
+$R_i = 1$ signifies a household is assigned treatment i.e., selected for disconnecting household's electricity       
+$R_i = 0$ signifies a household not assigned treatment i.e not selected for disconnecting electricity  
+
+
+ITT estimate can be found using regression
+
+```{r assigned_only_reg_table, results='asis', message=FALSE}
+assigned_only_reg <- lm(endline_payments ~ keller_trt, data = data)
+
+summary(assigned_only_reg)
+
+stargazer(assigned_only_reg,
+          type = "latex",
+          header = FALSE,
+          title = "Regression: Treatment Effect",
+          column.labels = c("$Regression: keller_trt, endline_payments$"),
+          colnames = FALSE,
+          model.numbers = FALSE,
+          df = FALSE)
+
+```
+
+```{r actually_treated_reg_table, results='asis', message=FALSE}
+actually_treated_reg <- lm(endline_payments ~ keller_trt_yes, data = data)
+
+summary(actually_treated_reg)
+
+stargazer(actually_treated_reg,
+          type = "latex",
+          header = FALSE,
+          title = "Regression: Treatment Effect",
+          column.labels = c("$Regression keller_trt_yes, endline_payments$"),
+          colnames = FALSE,
+          model.numbers = FALSE,
+          df = FALSE)
+
+```
+
+
+To see how many of the assigned treatment actually got treated, take ratio
+
+```{r}
+ratio_assigned_actual = sum(data$keller_trt_yes) / sum(data$keller_trt)
+
+print(ratio_assigned_actual)
+
+```
+
+The above ratio says that 70.3%($Pr(D_i = 1 | R_i = 1)$ = 0.703) of the households assigned treatment actually got treated. There exists a non compliance. 
+
+We also know that households in the control group were not treated. But checking again
+
+```{r}
+data %>% filter(keller_trt == 0 & keller_trt_yes == 1) %>% count()
+```
+
+i.e $Pr(D_i = 1 | R_i = 0)$ = 0, Hence $\tau^T$ is same as $\tau^{LATE}$. 
+
+As Keller is only interested to know about the actual effects of their disconnections, we can calculate the treatment effect on actually treated by 
+
+$\tau^T = \frac{\hat{\tau}^{experiment}}{Pr(D_i = 1 | R_i = 1)}$
+
+$\tau^{T}$ = -4679.1/0.7032593 = - Rs. 6,653.45 
+
+
+This means that the estimated average effect on actually treated i.e $\tau^T$ is endline payments decreased by Rs. 6,653.45
+
+
+
+#### How does this compare to what you estimated in (7)? 
+
+$\tau^{ATE} = E[Y_i(D_i=1)] - E[Y_i(D_i=0)]$  
+$\hat{\tau}^{ATE}= \bar{Y}(D_i=1) - \bar{Y}(D_i=0)$  
+$= -\ Rs. \ 4,679.066$  
+This means that the estimated average Intent to treatment effect $\tau^{ITT}$ is  post-treatment payments decreased by Rs. 4,769.066  
+
+Comparing both the estimated average ITT and estimated average effect on actually treated, we see that the effect on post treatment payments (or) endline_payments is greater in the actual treated vs the effect on post treatment paymets (or) endline payments in the Intent to Treatment.
+
