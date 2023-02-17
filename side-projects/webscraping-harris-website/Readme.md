@@ -1,3 +1,5 @@
+This project is a Python program that scrapes a webpage about the MPP program at the Harris School of Public Policy at the University of Chicago, and extracts information about the core courses required for the program. The program uses the requests and BeautifulSoup libraries to parse the HTML of the webpage and extract the relevant data.
+
 The website being scraped is https://harris.uchicago.edu/academics/programs-degrees/degrees/master-public-policy-mpp, which is the webpage for the Master of Public Policy (MPP) program at the Harris School of Public Policy at the University of Chicago.
 
 The information being parsed is related to the core courses required for the MPP program. Specifically, the code is searching for information about the courses that fulfill the MPP program's "6 core courses" requirement, which is a set of required courses that all MPP students must complete.
