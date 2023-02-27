@@ -1,0 +1,103 @@
+---
+title: "TA6_CLASS"
+author: "Kaveri Chhikara"
+date: "04/11/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### General idea
+Hypothesis test is to make a judgement of the likelihood of a parameter value based on a statistically analyzed situation (a given dataset).
+
+* Guess the parameter value (hypothesis)
+* Derive distribution based on this assumption
+* See the probability of we get the given dataset under our assumption
+
+### Steps
+* Formulate the null hypothesis in terms of a statistic from your sample (we hope to reject the null hypothesis)
+* Formulate the alternative hypothesis (two-tail or one-tail)
+* Pick a significance level to determine when to reject your null (the smaller, the more conservative)
+* Derive the distribution of your statistic under the null hypothesis
+* Reject your null if it is too unlikely that the null is true
+
+### Example: unemployment rate
+Distribution under assumption: binomial
+```{r}
+x <- seq(0,100,by = 1)
+y <- dbinom(x,size=100,prob=0.05)
+plot(x,y)
+```
+
+```{r}
+plot(x,y, type="l", col="Blue", lwd=5, pch=15, xlab="unemployment rate", ylab="probability")
+```
+
+Two-tail test: P(T less than equal to 0 or T greater than equal to 10)
+```{r}
+pbinom(0, size=100, prob=0.05) + (1 - pbinom(9, size=100, prob=0.05))
+
+binom.test(x = 10, n = 100, p = 0.05,
+           alternative = "two.sided",
+           conf.level = 0.95)
+```
+
+
+p-value: the smallest significance level that we can reject the null hypothesis  
+Here p-value is smaller than 0.05, so we can reject our null at 5% significance level.
+If we choose 1% significance level, we can't reject the null hypothesis.
+
+sample estimate: estimate of the parameter from the sample
+Here estimate is 0.1, so we estimate that the most likely value of unemployement rate is 0.1.
+
+confidence interval: a range of estimate of the parameter
+Here we are 95% sure that the true value of our parameter will be in [0.049, 0.176].
+
+
+One-tail test: P(T greater than 10)
+```{r}
+1 - pbinom(9, size=100, prob=0.05)
+
+binom.test(x = 10, n = 100, p = 0.05,
+           alternative = "greater",
+           conf.level = 0.95)
+```
+
+
+Asymptotic t-test: Pr(x_bar > 0.05)
+```{r}
+# t.test(x, y = NULL,
+#        alternative = c("two.sided", "less", "greater"),
+#        mu = 0, paired = FALSE, var.equal = FALSE,
+#        conf.level = 0.95, …)
+
+data <- rep(c(1,0),times=c(10,90))
+t.test(data, mu=0.05, alternative = "greater")
+```
+
+Can't reject the null.
+Statistics is all about probability, so we are never sure enough, don't say we 'accept' the null hypothesis.
+
+
+### Example: gender effect in programming
+Fisher's exact test
+
+Example from class: Suppose you have a sample of UC undergrads, 10 women and 10 men. 3 women and 8 men students took a programming course
+```{r}
+# male programmer: 8
+# male not: 2
+# female p:3
+# female not: 7
+# groups of male/female
+
+d <- matrix(c(8,2,3,7), nrow=2)
+fisher.test(d)
+fisher.test(d, alternative='greater')
+```
+
+
+p-value is 0.07 and 0.035, reject null for one-tail, can't reject for two-tail
+
+
