@@ -7,9 +7,10 @@
     ##### advanced-stats-1-R-stata      - All course materials and work produced during the course     .R .do
     ##### advanced-stats-2-R            - All course materials and work produced during the course     .R
     ##### program-evaluation-R          - All course materials and work produced during the course     .R
+    ##### machine-learning-python       - All course materials and work produced during the course     .ipynb .py
     
   #### side-projects:
-    ##### unemployment-analysis         - .py data analysis | vizualization | shiny | nlp | wordcloud | ols
+    ##### unemployment-analysis         - .py data analysis | data vizualization | shiny | nlp | wordcloud | ols
     ##### webscraping-harris-website    - Automated   .py
     ##### ebay-car-analysis             - .ipynb
     ##### i94-traffic-indicator         - .ipynb
